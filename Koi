@@ -1,0 +1,235 @@
+-- =====================================================================
+-- KYZEN HUB - FULL MENU SIDEBAR & LAYOUT (WITH SATURN ASSET ID)
+-- =====================================================================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Stats = game:GetService("Stats")
+
+-- Hapus UI lama jika ada
+if CoreGui:FindFirstChild("KyzenHubCustom") then
+    CoreGui.KyzenHubCustom:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KyzenHubCustom"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame (Jendela Utama)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 16, 24)
+MainFrame.BorderColor3 = Color3.fromRGB(0, 210, 255)
+MainFrame.BorderSizePixel = 2
+MainFrame.Position = UDim2.new(0.5, -310, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 620, 0, 400)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+-- Top Bar / Header
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.BackgroundColor3 = Color3.fromRGB(18, 25, 38)
+TopBar.BorderSizePixel = 0
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 8)
+TopCorner.Parent = TopBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = TopBar
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.Size = UDim2.new(0, 350, 1, 0)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "KYZEN HUB | KYZENKIO IS BACK"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 220, 255)
+TitleLabel.TextSize = 14
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Tombol Close (X)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Parent = TopBar
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+CloseButton.Position = UDim2.new(1, -35, 0, 8)
+CloseButton.Size = UDim2.new(0, 24, 0, 24)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 12
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- ANGKA 1: Tombol Menu (Sidebar di Kiri)
+local Sidebar = Instance.new("ScrollingFrame")
+Sidebar.Parent = MainFrame
+Sidebar.BackgroundColor3 = Color3.fromRGB(15, 20, 30)
+Sidebar.BorderSizePixel = 0
+Sidebar.Position = UDim2.new(0, 10, 0, 50)
+Sidebar.Size = UDim2.new(0, 140, 0, 340)
+Sidebar.CanvasSize = UDim2.new(0, 0, 0, 260)
+Sidebar.ScrollBarThickness = 2
+
+local SidebarCorner = Instance.new("UICorner")
+SidebarCorner.CornerRadius = UDim.new(0, 6)
+SidebarCorner.Parent = Sidebar
+
+local UIListSidebar = Instance.new("UIListLayout")
+UIListSidebar.Parent = Sidebar
+UIListSidebar.SortOrder = Enum.SortOrder.LayoutOrder
+UIListSidebar.Padding = UDim.new(0, 6)
+
+local ContentArea = Instance.new("Frame")
+ContentArea.Parent = MainFrame
+ContentArea.BackgroundTransparency = 1
+ContentArea.Position = UDim2.new(0, 160, 0, 50)
+ContentArea.Size = UDim2.new(0, 450, 0, 340)
+
+local currentTabContent = nil
+
+local function createTabContent(tabName)
+    if currentTabContent then currentTabContent:Destroy() end
+    
+    currentTabContent = Instance.new("Frame")
+    currentTabContent.Parent = ContentArea
+    currentTabContent.BackgroundTransparency = 1
+    currentTabContent.Size = UDim2.new(1, 0, 1, 0)
+    
+    if tabName == "Info" then
+        -- ANGKA 2: Penjelasan Fitur + Live Uptime & Ping
+        local InfoBox = Instance.new("Frame")
+        InfoBox.Parent = currentTabContent
+        InfoBox.BackgroundColor3 = Color3.fromRGB(18, 24, 36)
+        InfoBox.Position = UDim2.new(0, 0, 0, 5)
+        InfoBox.Size = UDim2.new(0, 215, 0, 330)
+        
+        local BoxCorner = Instance.new("UICorner")
+        BoxCorner.CornerRadius = UDim.new(0, 6)
+        BoxCorner.Parent = InfoBox
+        
+        local InfoText = Instance.new("TextLabel")
+        InfoText.Parent = InfoBox
+        InfoText.BackgroundTransparency = 1
+        InfoText.Position = UDim2.new(0, 12, 0, 12)
+        InfoText.Size = UDim2.new(1, -24, 1, -24)
+        InfoText.Font = Enum.Font.GothamBold
+        InfoText.Text = "Welcome KYZEN\nKYZEN IS BACK\n\nStatus: 28229 members\n001 online\n\nVersion: v2.1.0\n\nUptime: 00h 00m 00s\nPing: 0 ms"
+        InfoText.TextColor3 = Color3.fromRGB(200, 230, 255)
+        InfoText.TextSize = 12
+        InfoText.TextXAlignment = Enum.TextXAlignment.Left
+        InfoText.TextYAlignment = Enum.TextYAlignment.Top
+        InfoText.TextWrapped = true
+
+        -- Live Uptime & Ping Loop
+        task.spawn(function()
+            local startTime = tick()
+            while InfoText and InfoText.Parent do
+                local currentTime = tick() - startTime
+                local hours = math.floor(currentTime / 3600)
+                local minutes = math.floor((currentTime % 3600) / 60)
+                local seconds = math.floor(currentTime % 60)
+                
+                local pingVal = 0
+                pcall(function()
+                    pingVal = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+                end)
+                
+                InfoText.Text = string.format(
+                    "Welcome KYZEN\nKYZEN IS BACK\n\nStatus: 28229 members\n001 online\n\nVersion: v2.1.0\n\nUptime: %02dh %02dm %02ds\nPing: %d ms",
+                    hours, minutes, seconds, pingVal
+                )
+                task.wait(1)
+            end
+        end)
+
+        -- ANGKA 3: Logo / Gambar Saturnus di Kanan Info (Asset ID Terpasang)
+        local SaturnBox = Instance.new("Frame")
+        SaturnBox.Parent = currentTabContent
+        SaturnBox.BackgroundColor3 = Color3.fromRGB(18, 24, 36)
+        SaturnBox.Position = UDim2.new(0, 225, 0, 5)
+        SaturnBox.Size = UDim2.new(0, 215, 0, 330)
+        
+        local SaturnBoxCorner = Instance.new("UICorner")
+        SaturnBoxCorner.CornerRadius = UDim.new(0, 6)
+        SaturnBoxCorner.Parent = SaturnBox
+        
+        local SaturnCard = Instance.new("ImageLabel")
+        SaturnCard.Parent = SaturnBox
+        SaturnCard.BackgroundTransparency = 1
+        SaturnCard.Position = UDim2.new(0, 10, 0, 10)
+        SaturnCard.Size = UDim2.new(1, -20, 1, -20)
+        SaturnCard.Image = "rbxassetid://6023426915" -- Asset ID Ikon Galaksi/Planet Roblox
+        SaturnCard.ScaleType = Enum.ScaleType.Fit
+
+    else
+        -- Template Kosong Untuk Menu Lainnya
+        local EmptyBox = Instance.new("Frame")
+        EmptyBox.Parent = currentTabContent
+        EmptyBox.BackgroundColor3 = Color3.fromRGB(18, 24, 36)
+        EmptyBox.Position = UDim2.new(0, 0, 0, 5)
+        EmptyBox.Size = UDim2.new(0, 440, 0, 330)
+        
+        local EmptyCorner = Instance.new("UICorner")
+        EmptyCorner.CornerRadius = UDim.new(0, 6)
+        EmptyCorner.Parent = EmptyBox
+        
+        local EmptyText = Instance.new("TextLabel")
+        EmptyText.Parent = EmptyBox
+        EmptyText.BackgroundTransparency = 1
+        EmptyText.Size = UDim2.new(1, 0, 1, 0)
+        EmptyText.Font = Enum.Font.GothamBold
+        EmptyText.Text = "--- " .. tabName .. " MENU ---\n\n(Fitur akan segera ditambahkan di sini)"
+        EmptyText.TextColor3 = Color3.fromRGB(0, 220, 255)
+        EmptyText.TextSize = 14
+    end
+end
+
+-- Fungsi Pembuat Tombol Menu Kiri
+local function createMenuButton(name, order)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = Sidebar
+    Btn.BackgroundColor3 = Color3.fromRGB(22, 32, 48)
+    Btn.Size = UDim2.new(0, 130, 0, 35)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.Text = name
+    Btn.TextColor3 = Color3.fromRGB(0, 220, 255)
+    Btn.TextSize = 12
+    Btn.LayoutOrder = order
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 4)
+    Corner.Parent = Btn
+    
+    Btn.MouseButton1Click:Connect(function()
+        createTabContent(name)
+    end)
+end
+
+-- Daftar Semua Menu Sesuai Permintaan Anda
+createMenuButton("Info Hub", 1)
+createMenuButton("Movement", 2)
+createMenuButton("ESP", 3)
+createMenuButton("Grafik", 4)
+createMenuButton("Teleport", 5)
+createMenuButton("System Server", 6)
+
+-- Default Buka Tab Info Hub
+createTabContent("Info")
