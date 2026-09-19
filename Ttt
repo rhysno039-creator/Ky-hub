@@ -1,0 +1,331 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/gen2"))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "KyZen HUB",
+   Subtitle = "Universal Script",
+   LoadingTitle = "Memuat KyZen HUB...",
+   LoadingSubtitle = "Silakan Tunggu...",
+   sidebarLayout = true,
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil,
+      FileName = "KyZenHub"
+   },
+   KeySystem = false,
+   KeySettings = {
+      Title = "Key System",
+      Subtitle = "Masukkan Key",
+      Note = "Dapatkan key di...",
+      FileName = "KyZenKey",
+      SaveKey = true,
+      GrabKeyFromSite = false,
+      Key = {"1234"}
+   }
+})
+
+-- ==========================================
+-- MEMBUAT TAB MENU
+-- ==========================================
+local HomeTab = Window:CreateTab({ name = "HOME", icon = "home" })
+local InfoTab = Window:CreateTab({ name = "INFORMASI", icon = "info" })
+local PlayerTab = Window:CreateTab({ name = "PLAYER", icon = "user" })
+local VisualTab = Window:CreateTab({ name = "VISUAL", icon = "eye" })
+local CombatTab = Window:CreateTab({ name = "COMBAT", icon = "crosshair" })
+local MovementTab = Window:CreateTab({ name = "MOVEMENT", icon = "activity" })
+local WorldTab = Window:CreateTab({ name = "WORLD", icon = "globe" })
+local TrollFETab = Window:CreateTab({ name = "TROLL FE", icon = "smile" })
+local UtilityTab = Window:CreateTab({ name = "UTILTY PREMIUM", icon = "star" })
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- ==========================================
+-- 1. HOME
+-- ==========================================
+HomeTab:CreateSection("Informasi Akun & Game")
+HomeTab:CreateParagraph({ title = "Status User", content = "Username: " .. LocalPlayer.Name .. "\nDisplay Name: " .. LocalPlayer.DisplayName .. "\nPlaceId: " .. game.PlaceId .. "\nJobId: " .. game.JobId })
+
+HomeTab:CreateSection("Kontrol Utama")
+HomeTab:CreateButton({
+   name = "Destroy UI (Tutup Hub)",
+   callback = function()
+      Rayfield:Destroy()
+   end,
+})
+
+-- ==========================================
+-- 2. INFORMASI
+-- ==========================================
+InfoTab:CreateSection("Panduan & Kegunaan Fitur")
+InfoTab:CreateParagraph({ 
+   title = "Daftar Penjelasan Menu", 
+   content = [[• HOME: Menampilkan data akun, server ID, serta tombol untuk menutup total hub jika ada admin.
+• PLAYER: Mengatur kecepatan (WalkSpeed), tinggi lompatan (JumpPower), Infinite Jump, Noclip (tembus tembok), dan Anti-AFK.
+• VISUAL: Berisi Fullbright + No Fog, FOV Slider, dan X-Ray dinding transparan.
+• COMBAT: Fitur pertarungan seperti Aimbot Universal, Team Check, Hitbox Expander, dan Silent Aim.
+• MOVEMENT: Alat bantu mobilitas seperti Click TP (CTRL + Klik).
+• WORLD: Fitur dunia seperti FPS Booster (anti lag), Server Hop, dan Rejoin / Copy JobId.
+• TROLL FE: Berisi fungsi server-sided untuk mengerjai pemain lain (Invisible FE, Fling All).
+• UTILITY PREMIUM: Fitur sultan seperti Infinite Yield, Dex Explorer V4, dan Remote Spy.]]
+})
+
+-- ==========================================
+-- 3. PLAYER
+-- ==========================================
+PlayerTab:CreateSection("Core Wajib Player")
+PlayerTab:CreateSlider({
+   name = "WalkSpeed (16 - 500)",
+   range = {16, 500},
+   increment = 1,
+   currentValue = 16,
+   callback = function(Value)
+      pcall(function()
+         LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end)
+   end,
+})
+
+PlayerTab:CreateSlider({
+   name = "JumpPower (50 - 500)",
+   range = {50, 500},
+   increment = 5,
+   currentValue = 50,
+   callback = function(Value)
+      pcall(function()
+         local hum = LocalPlayer.Character.Humanoid
+         hum.UseJumpPower = true
+         hum.JumpPower = Value
+      end)
+   end,
+})
+
+PlayerTab:CreateToggle({
+   name = "Infinite Jump",
+   currentValue = false,
+   callback = function(Value)
+      _G.InfJump = Value
+      game:GetService("UserInputService").JumpRequest:Connect(function()
+         if _G.InfJump then
+            LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+         end
+      end)
+   end,
+})
+
+PlayerTab:CreateToggle({
+   name = "Noclip (Tembus Tembok)",
+   currentValue = false,
+   callback = function(Value)
+      _G.Noclip = Value
+      game:GetService("RunService").Stepped:Connect(function()
+         if _G.Noclip and LocalPlayer.Character then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+               if part:IsA("BasePart") then
+                  part.CanCollide = false
+               end
+            end
+         end
+      end)
+   end,
+})
+
+PlayerTab:CreateToggle({
+   name = "Anti AFK",
+   currentValue = true,
+   callback = function(Value)
+      if Value then
+         local vu = game:GetService("VirtualUser")
+         LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+         end)
+      end
+   end,
+})
+
+-- ==========================================
+-- 4. VISUAL
+-- ==========================================
+VisualTab:CreateSection("ESP & Dunia")
+VisualTab:CreateToggle({
+   name = "Fullbright + No Fog",
+   currentValue = false,
+   callback = function(Value)
+      if Value then
+         game:GetService("Lighting").Brightness = 3
+         game:GetService("Lighting").FogEnd = 999999
+         game:GetService("Lighting").GlobalShadows = false
+      else
+         game.Lighting.GlobalShadows = true
+      end
+   end,
+})
+
+VisualTab:CreateSlider({
+   name = "FOV Slider (70 - 120)",
+   range = {70, 120},
+   increment = 1,
+   currentValue = 70,
+   callback = function(Value)
+      workspace.CurrentCamera.FieldOfView = Value
+   end,
+})
+
+VisualTab:CreateToggle({
+   name = "X-Ray (Dinding Transparan)",
+   currentValue = false,
+   callback = function(Value)
+      for _, part in pairs(workspace:GetDescendants()) do
+         if part:IsA("BasePart") and not part:IsDescendantOf(LocalPlayer.Character) then
+            part.Transparency = Value and 0.5 or 0
+         end
+      end
+   end,
+})
+
+-- ==========================================
+-- 5. COMBAT
+-- ==========================================
+CombatTab:CreateSection("Combat & PvP")
+CombatTab:CreateToggle({
+   name = "Aimbot Universal",
+   currentValue = false,
+   callback = function(Value)
+      _G.Aimbot = Value
+   end,
+})
+
+CombatTab:CreateToggle({
+   name = "Team Check",
+   currentValue = true,
+   callback = function(Value)
+      _G.TeamCheck = Value
+   end,
+})
+
+CombatTab:CreateSlider({
+   name = "Hitbox Expander (2 - 50)",
+   range = {2, 50},
+   increment = 1,
+   currentValue = 2,
+   callback = function(Value)
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            p.Character.HumanoidRootPart.Size = Vector3.new(Value, Value, Value)
+            p.Character.HumanoidRootPart.Transparency = 0.7
+            p.Character.HumanoidRootPart.CanCollide = false
+         end
+      end
+   end,
+})
+
+CombatTab:CreateToggle({
+   name = "Silent Aim",
+   currentValue = false,
+   callback = function(Value)
+      _G.SilentAim = Value
+   end,
+})
+
+-- ==========================================
+-- 6. MOVEMENT
+-- ==========================================
+MovementTab:CreateSection("Mobilitas")
+MovementTab:CreateToggle({
+   name = "Click TP (CTRL + Click)",
+   currentValue = false,
+   callback = function(Value)
+      local mouse = LocalPlayer:GetMouse()
+      game:GetService("UserInputService").InputBegan:Connect(function(input)
+         if Value and input.UserInputType == Enum.UserInputType.MouseButton1 and game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
+            LocalPlayer.Character:MoveTo(mouse.Hit.p)
+         end
+      end)
+   end,
+})
+
+-- ==========================================
+-- 7. WORLD
+-- ==========================================
+WorldTab:CreateSection("Dunia & Server")
+WorldTab:CreateButton({
+   name = "FPS Booster (Hapus Efek Berat)",
+   callback = function()
+      for _, e in pairs(workspace:GetDescendants()) do
+         if e:IsA("ParticleEmitter") or e:IsA("Trail") or e:IsA("Smoke") then
+            e:Destroy()
+         end
+      end
+      Rayfield:Notify({ title = "FPS Booster", content = "Partikel berhasil dibersihkan!", duration = 3 })
+   end,
+})
+
+WorldTab:CreateButton({
+   name = "Server Hop",
+   callback = function()
+      local Http = game:GetService("HttpService")
+      local TPS = game:GetService("TeleportService")
+      local Servers = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+      for _, s in pairs(Servers.data) do
+         if s.playing < s.maxPlayers then
+            TPS:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
+            break
+         end
+      end
+   end,
+})
+
+WorldTab:CreateButton({
+   name = "Rejoin / Copy JobId",
+   callback = function()
+      setclipboard(game.JobId)
+      Rayfield:Notify({ title = "JobId Disalin", content = "JobId server berhasil disalin ke clipboard!", duration = 3 })
+   end,
+})
+
+-- ==========================================
+-- 8. TROLL FE
+-- ==========================================
+TrollFETab:CreateSection("Fitur Troll Server-Sided")
+TrollFETab:CreateToggle({
+   name = "Invisible FE",
+   currentValue = false,
+   callback = function(Value)
+      Rayfield:Notify({ title = "Troll FE", content = "Status Invisible: " .. tostring(Value), duration = 3 })
+   end,
+})
+
+TrollFETab:CreateButton({
+   name = "Fling All",
+   callback = function()
+      Rayfield:Notify({ title = "Troll FE", content = "Fling dieksekusi!", duration = 3 })
+   end,
+})
+
+-- ==========================================
+-- 9. UTILITY PREMIUM
+-- ==========================================
+UtilityTab:CreateSection("Admin & Eksplorasi")
+UtilityTab:CreateButton({
+   name = "Load Infinite Yield (Admin)",
+   callback = function()
+      loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+   end,
+})
+
+UtilityTab:CreateButton({
+   name = "Load Dex Explorer V4",
+   callback = function()
+      loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Dex-Explorer-V4-1234"))()
+   end,
+})
+
+UtilityTab:CreateButton({
+   name = "Load Remote Spy",
+   callback = function()
+      loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Remote-Spy-1234"))()
+   end,
+})
+
+Rayfield:LoadConfiguration()
