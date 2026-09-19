@@ -1,0 +1,191 @@
+--------------------------------------------------------------------------------
+-- KYZEN HUB v2 - FULL FEATURES SCRIPT STRUCTURE
+--------------------------------------------------------------------------------
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+
+local Flags = {
+    -- Movement
+    Fly = false, FlySpeed = 50,
+    WalkSpeed = false, WalkSpeedVal = 16,
+    TPWalk = false, TPWalkSpeed = 2,
+    MoonWalk = false, SpiderClimb = false, Noclip = false, InfJump = false,
+    JumpPower = false, JumpPowerVal = 50,
+    ShiftLockForce = false, NoSlow = false, BunnyHop = false,
+    
+    -- Visual / ESP
+    PlayerESP = false, SkeletonESP = false, ItemESP = false,
+    Tracers = false, HitboxExpander = false, HitboxSize = 10,
+    FullBright = false, XRay = false, FOVChanger = false,
+    FreeCam = false, FreeCursor = false, Spectate = false,
+    
+    -- World / Grafik
+    BrightnessVal = 2, AntiLag = false, GhostOther = false,
+    InvisibleSelf = false, GhostMode = false,
+    
+    -- System / Server
+    AntiAFK = true, AntiKick = false, AntiRejoin = false,
+    CopyAvatar = false, SaveSettings = false, Playtime = 0,
+}
+
+local function getCharacter() return LocalPlayer.Character end
+local function getHumanoid() 
+    local c = getCharacter() 
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+local function getRoot() 
+    local c = getCharacter() 
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+--------------------------------------------------------------------------------
+-- 1. MOVEMENT TAB
+--------------------------------------------------------------------------------
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+
+MovementTab:CreateToggle({
+    Name = "Fly (CFrame Fly)",
+    CurrentValue = false,
+    Callback = function(v) Flags.Fly = v end
+})
+MovementTab:CreateInput({
+    Name = "Fly Speed (Ketik Manual)",
+    PlaceholderText = "50 / 500 / 1000+",
+    RemoveTextOnFocus = false,
+    Callback = function(text) Flags.FlySpeed = tonumber(text) or 50 end
+})
+
+MovementTab:CreateToggle({
+    Name = "Walk Speed",
+    CurrentValue = false,
+    Callback = function(v) 
+        Flags.WalkSpeed = v 
+        if not v and getHumanoid() then getHumanoid().WalkSpeed = 16 end
+    end
+})
+MovementTab:CreateInput({
+    Name = "Walk Speed Value (Ketik Manual)",
+    PlaceholderText = "16 / 100 / 500+",
+    RemoveTextOnFocus = false,
+    Callback = function(text) Flags.WalkSpeedVal = tonumber(text) or 16 end
+})
+
+MovementTab:CreateToggle({ Name = "TP Walk", CurrentValue = false, Callback = function(v) Flags.TPWalk = v end })
+MovementTab:CreateToggle({ Name = "Moon Walk", CurrentValue = false, Callback = function(v) Flags.MoonWalk = v end })
+MovementTab:CreateToggle({ Name = "Spider Climb", CurrentValue = false, Callback = function(v) Flags.SpiderClimb = v end })
+MovementTab:CreateToggle({ Name = "Jump Power", CurrentValue = false, Callback = function(v) Flags.JumpPower = v end })
+MovementTab:CreateInput({ Name = "Jump Power Value", PlaceholderText = "50", Callback = function(t) Flags.JumpPowerVal = tonumber(t) or 50 end })
+MovementTab:CreateToggle({ Name = "Inf Jump", CurrentValue = false, Callback = function(v) Flags.InfJump = v end })
+MovementTab:CreateToggle({ Name = "No Clip", CurrentValue = false, Callback = function(v) Flags.Noclip = v end })
+MovementTab:CreateToggle({ Name = "Shift Lock Force", CurrentValue = false, Callback = function(v) Flags.ShiftLockForce = v end })
+MovementTab:CreateToggle({ Name = "No Slow", CurrentValue = false, Callback = function(v) Flags.NoSlow = v end })
+MovementTab:CreateToggle({ Name = "Bunny Hop", CurrentValue = false, Callback = function(v) Flags.BunnyHop = v end })
+
+--------------------------------------------------------------------------------
+-- 2. VISUAL / ESP TAB
+--------------------------------------------------------------------------------
+local VisualsTab = Window:CreateTab("Visual / ESP", 4483362458)
+
+VisualsTab:CreateToggle({ Name = "Player ESP", CurrentValue = false, Callback = function(v) Flags.PlayerESP = v end })
+VisualsTab:CreateToggle({ Name = "Skeleton ESP", CurrentValue = false, Callback = function(v) Flags.SkeletonESP = v end })
+VisualsTab:CreateToggle({ Name = "Item / Egg / NPC ESP", CurrentValue = false, Callback = function(v) Flags.ItemESP = v end })
+VisualsTab:CreateToggle({ Name = "Tracers", CurrentValue = false, Callback = function(v) Flags.Tracers = v end })
+VisualsTab:CreateToggle({ Name = "Hitbox Expander", CurrentValue = false, Callback = function(v) Flags.HitboxExtender = v end })
+VisualsTab:CreateInput({ Name = "Hitbox Size (Ketik)", PlaceholderText = "10", Callback = function(t) Flags.HitboxSize = tonumber(t) or 10 end })
+VisualsTab:CreateToggle({ Name = "Full Bright", CurrentValue = false, Callback = function(v) Flags.FullBright = v end })
+VisualsTab:CreateToggle({ Name = "X-Ray", CurrentValue = false, Callback = function(v) Flags.XRay = v end })
+VisualsTab:CreateToggle({ Name = "FOV Changer", CurrentValue = false, Callback = function(v) Flags.FOVChanger = v end })
+VisualsTab:CreateToggle({ Name = "Free Cam", CurrentValue = false, Callback = function(v) Flags.FreeCam = v end })
+VisualsTab:CreateToggle({ 
+    Name = "Free Cursor / Mouse", 
+    CurrentValue = false, 
+    Callback = function(v) 
+        Flags.FreeCursor = v 
+        UserInputService.MouseBehavior = v and Enum.MouseBehavior.Default or Enum.MouseBehavior.LockCenter
+    end 
+})
+VisualsTab:CreateToggle({ Name = "Spectate Player", CurrentValue = false, Callback = function(v) Flags.Spectate = v end })
+
+--------------------------------------------------------------------------------
+-- 3. WORLD / GRAFIK TAB
+--------------------------------------------------------------------------------
+local WorldTab = Window:CreateTab("World / Grafik", 4483362458)
+
+WorldTab:CreateInput({
+    Name = "Brightness Slider (-20 s/d 20)",
+    PlaceholderText = "2",
+    Callback = function(t) Flags.BrightnessVal = tonumber(t) or 2 end
+})
+WorldTab:CreateToggle({ Name = "Anti Lag / FPS Boost", CurrentValue = false, Callback = function(v) Flags.AntiLag = v end })
+WorldTab:CreateToggle({ Name = "Ghost Other Player", CurrentValue = false, Callback = function(v) Flags.GhostOther = v end })
+WorldTab:CreateToggle({ Name = "Invisible Self", CurrentValue = false, Callback = function(v) Flags.InvisibleSelf = v end })
+WorldTab:CreateToggle({ Name = "Ghost Mode (Client-side)", CurrentValue = false, Callback = function(v) Flags.GhostMode = v end })
+
+--------------------------------------------------------------------------------
+-- 4. SYSTEM / SERVER TAB
+--------------------------------------------------------------------------------
+local SystemTab = Window:CreateTab("System / Server", 4483362458)
+
+SystemTab:CreateToggle({ Name = "Anti AFK", CurrentValue = true, Callback = function(v) Flags.AntiAFK = v end })
+SystemTab:CreateToggle({ Name = "Anti Kick", CurrentValue = false, Callback = function(v) Flags.AntiKick = v end })
+SystemTab:CreateToggle({ Name = "Anti Rejoin", CurrentValue = false, Callback = function(v) Flags.AntiRejoin = v end })
+SystemTab:CreateButton({ Name = "Copy Avatar", Callback = function() end })
+SystemTab:CreateToggle({ Name = "Save Settingan (Auto-Save)", CurrentValue = false, Callback = function(v) Flags.SaveSettings = v end })
+SystemTab:CreateParagraph({ Title = "Playtime Counter", Content = "Waktu Aktif: 0 Menit" })
+SystemTab:CreateParagraph({ Title = "Ping / FPS Live", Content = "Ping: 0ms | FPS: 60" })
+
+--------------------------------------------------------------------------------
+-- 5. TELEPORT TAB
+--------------------------------------------------------------------------------
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+
+TeleportTab:CreateDropdown({ Name = "List Player (Laci)", Options = {"None"}, Callback = function() end })
+TeleportTab:CreateButton({ Name = "Refresh Player List", Callback = function() end })
+TeleportTab:CreateButton({ Name = "Teleport to Player", Callback = function() end })
+TeleportTab:CreateButton({ Name = "Save And Teleport (5 Slots)", Callback = function() end })
+TeleportTab:CreateButton({ Name = "Save And Run (Auto-Run Path)", Callback = function() end })
+
+--------------------------------------------------------------------------------
+-- 6. UI KY HUB (SETTINGS & CUSTOMIZATION)
+--------------------------------------------------------------------------------
+local SettingsTab = Window:CreateTab("UI Settings", 4483362458)
+
+SettingsTab:CreateToggle({ Name = "UI Transparansi Slider", CurrentValue = false, Callback = function(v) end })
+SettingsTab:CreateDropdown({ 
+    Name = "Ganti Tema (10 Warna)", 
+    Options = {"AMOLED", "Ash Gray", "Blood Red", "Cyanic", "Amber Glow", "Deep Violet", "Neon Cyber", "Neon Purple", "Royal Blue", "EmeraldDark"},
+    Callback = function() end 
+})
+SettingsTab:CreateToggle({ Name = "Sistem Laci (Sidebar Tab)", CurrentValue = true, Callback = function(v) end })
+SettingsTab:CreateToggle({ Name = "Animated Window", CurrentValue = true, Callback = function(v) end })
+SettingsTab:CreateToggle({ Name = "Disable Background Image", CurrentValue = false, Callback = function(v) end })
+SettingsTab:CreateDropdown({ Name = "Font Manager", Options = {"GothamSSM", "Gotham", "Arial", "Roboto"}, Callback = function() end })
+SettingsTab:CreateButton({ Name = "Minimize Bind / Draggable / Unload", Callback = function() end })
+SettingsTab:CreateButton({ 
+    Name = "TT javanese7283 (Copy to Clipboard)", 
+    Callback = function() 
+        if setclipboard then setclipboard("javanese7283") end 
+    end 
+})
+SettingsTab:CreateParagraph({ Title = "Top Right Bar", Content = "Avatar | Script Name | Delta | Ping | Real Time Clock" })
+SettingsTab:CreateParagraph({ Title = "Welcome Card", Content = "Welcome, " .. LocalPlayer.Name })
+
+--------------------------------------------------------------------------------
+-- LOOP EKSEKUSI UTAMA (RenderStepped)
+--------------------------------------------------------------------------------
+RunService.RenderStepped:Connect(function()
+    local hum = getHumanoid()
+    if hum then
+        if Flags.WalkSpeed then
+            hum.WalkSpeed = Flags.WalkSpeedVal
+        end
+        if Flags.JumpPower then
+            hum.UseJumpPower = true
+            hum.JumpPower = Flags.JumpPowerVal
+        end
+    end
+end)
