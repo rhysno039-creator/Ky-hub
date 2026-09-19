@@ -1,0 +1,104 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+-- Membuat Window Utama
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB",
+    Icon = "rbxassetid://4483362458",
+    Author = "Universal",
+    Folder = "KyZenHub",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- ==========================================
+-- MEMBUAT TAB MENU
+-- ==========================================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+local UtilityTab = Window:Tab({ Title = "Utility", Icon = "star" })
+
+-- ==========================================
+-- 1. HOME TAB
+-- ==========================================
+HomeTab:Paragraph({
+    Title = "Informasi Akun",
+    Desc = "Username: " .. LocalPlayer.Name .. "\nPlaceId: " .. game.PlaceId
+})
+
+HomeTab:Button({
+    Title = "Tutup / Destroy UI",
+    Callback = function()
+        Window:Destroy()
+    end
+})
+
+-- ==========================================
+-- 2. PLAYER TAB
+-- ==========================================
+PlayerTab:Slider({
+    Title = "WalkSpeed",
+    Range = {16, 300},
+    Default = 16,
+    Increment = 1,
+    Callback = function(Value)
+        pcall(function()
+            LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        end)
+    end
+})
+
+PlayerTab:Slider({
+    Title = "JumpPower",
+    Range = {50, 300},
+    Default = 50,
+    Increment = 5,
+    Callback = function(Value)
+        pcall(function()
+            local hum = LocalPlayer.Character.Humanoid
+            hum.UseJumpPower = true
+            hum.JumpPower = Value
+        end)
+    end
+})
+
+-- ==========================================
+-- 3. WORLD TAB
+-- ==========================================
+WorldTab:Button({
+    Title = "FPS Booster",
+    Callback = function()
+        for _, e in pairs(workspace:GetDescendants()) do
+            if e:IsA("ParticleEmitter") or e:IsA("Trail") or e:IsA("Smoke") then
+                e:Destroy()
+            end
+        end
+        WindUI:Notify({
+            Title = "FPS Booster",
+            Content = "Partikel berhasil dibersihkan!",
+            Duration = 3
+        })
+    end
+})
+
+-- ==========================================
+-- 4. UTILITY TAB
+-- ==========================================
+UtilityTab:Button({
+    Title = "Load Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end
+})
+
+-- Notifikasi bahwa UI berhasil dimuat
+WindUI:Notify({
+    Title = "KyZen HUB",
+    Content = "Berhasil dimuat menggunakan WindUI!",
+    Duration = 4
+})
