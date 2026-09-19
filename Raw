@@ -1,0 +1,192 @@
+-- =====================================================================
+-- KYZEN HUB v2 - CLEAN MOBILE FLY & NOCLIP FIX
+-- =====================================================================
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Menggunakan struktur Flags milikmu
+getgenv().Flags = {
+   Fly = false,
+   FlySpeed = 50,
+   FlyNoClip = true,
+   ShiftLock = false,
+   WalkSpeed = false,
+   WalkSpeedValue = 16,
+   NoClip = false
+}
+
+local DefaultGravity = Workspace.Gravity
+
+local function getCharacter() return LocalPlayer.Character end
+local function getHumanoid()
+    local c = getCharacter()
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+local function getRoot()
+    local c = getCharacter()
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+local Window = Rayfield:CreateWindow({
+   Name = "KYZEN HUB v2 | Movement",
+   LoadingTitle = "KYZEN HUB",
+   LoadingSubtitle = "Clean Movement Module",
+   ConfigurationSaving = { Enabled = false }
+})
+
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+
+-- ==========================================
+-- FLY & FLY NOCLIP LOGIC
+-- ==========================================
+MovementTab:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flags.Fly = Value
+        local hum = getHumanoid()
+        if not Value then
+            Workspace.Gravity = DefaultGravity
+            if hum then
+                hum.PlatformStand = false
+                hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
+        else
+            DefaultGravity = Workspace.Gravity
+            if hum then
+                hum:ChangeState(Enum.HumanoidStateType.Physics)
+            end
+        end
+    end
+})
+
+MovementTab:CreateInput({
+    Name = "Fly Speed",
+    PlaceholderText = "50",
+    RemoveTextOnFocus = false,
+    Callback = function(Text) 
+        Flags.FlySpeed = tonumber(Text) or 50 
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Fly NoClip",
+    CurrentValue = true,
+    Callback = function(Value)
+        Flags.FlyNoClip = Value
+    end
+})
+
+-- Loop Utama untuk Fly (Menggunakan MoveDirection bawaan Roblox agar analog HP 100% Normal)
+RunService.RenderStepped:Connect(function()
+    local hum = getHumanoid()
+    local root = getRoot()
+    local char = getCharacter()
+
+    -- NoClip khusus saat Fly aktif
+    if Flags.Fly and Flags.FlyNoClip and char then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+
+    -- Kontrol Kecepatan Terbang mengikuti arah analog asli HP tanpa terbalik
+    if Flags.Fly and hum and root then
+        hum.PlatformStand = true
+        local moveDir = hum.MoveDirection
+        
+        -- Jika analog digerakkan atau tombol ditekan, terapkan kecepatan ke root part sesuai arah kamera/analog
+        if moveDir.Magnitude > 0 then
+            root.Velocity = Vector3.new(moveDir.X * Flags.FlySpeed, root.Velocity.Y, moveDir.Z * Flags.FlySpeed)
+        else
+            root.Velocity = Vector3.new(0, 0, 0)
+        end
+    end
+
+    -- Shift Lock Logic (Sesuai kode kamu yang aman dari bentrok Fly)
+    if Flags.ShiftLock and not Flags.Fly and root then
+        local cam = Workspace.CurrentCamera
+        local lookVector = cam.CFrame.LookVector
+        root.CFrame = CFrame.new(root.Position, root.Position + Vector3.new(lookVector.X, 0, lookVector.Z))
+    end
+end)
+
+-- ==========================================
+-- WALK SPEED
+-- ==========================================
+MovementTab:CreateToggle({
+    Name = "Enable WalkSpeed",
+    CurrentValue = false,
+    Callback = function(v)
+        Flags.WalkSpeed = v
+        if not v then
+            local hum = getHumanoid()
+            if hum then hum.WalkSpeed = 16 end
+        end
+    end
+})
+
+MovementTab:CreateInput({
+    Name = "WalkSpeed Value",
+    PlaceholderText = "16",
+    RemoveTextOnFocus = false,
+    Callback = function(Text)
+        Flags.WalkSpeedValue = tonumber(Text) or 16
+    end
+})
+
+RunService.Heartbeat:Connect(function()
+    if Flags.WalkSpeed then
+        local hum = getHumanoid()
+        if hum then
+            hum.WalkSpeed = Flags.WalkSpeedValue
+        end
+    end
+end)
+
+-- ==========================================
+-- GENERAL NOCLIP
+-- ==========================================
+MovementTab:CreateToggle({
+    Name = "Ghost Phase (NoClip)",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flags.NoClip = Value
+    end
+})
+
+RunService.Stepped:Connect(function()
+    if Flags.NoClip then
+        local char = getCharacter()
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- ==========================================
+-- SHIFT LOCK TOGGLE
+-- ==========================================
+MovementTab:CreateToggle({
+    Name = "Forced Camera Lock",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flags.ShiftLock = Value
+    end
+})
+
+Rayfield:Notify({
+   Title = "Perbaikan Total Berhasil!",
+   Content = "Analog HP kembali normal, Fly smooth, dan NoClip khusus Fly aktif.",
+   Duration = 5,
+})
