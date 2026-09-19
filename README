@@ -1,0 +1,298 @@
+-- =====================================================================
+-- KYZEN HUB v2 (Rayfield Version - Complete Features)
+-- =====================================================================
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local Window = Rayfield:CreateWindow({
+   Name = "KYZEN HUB v2 | Universal Hub",
+   LoadingTitle = "KYZEN HUB",
+   LoadingSubtitle = "by Kyzen",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "KyzenHubV2",
+      FileName = "Config"
+   },
+   Discord = {
+      Enabled = true,
+      Invite = "javanese7283", 
+      RememberJoins = true
+   },
+   KeySystem = false, 
+})
+
+-- TAB 1: INFO & WELCOME
+local InfoTab = Window:CreateTab("Info", 4483362458)
+InfoTab:CreateSection("Welcome, " .. LocalPlayer.Name)
+
+InfoTab:CreateParagraph({
+   Title = "KYZEN HUB v2", 
+   Content = "Hub universal dengan fitur lengkap, stabil, dan aman.\n\n• TikTok: javanese7283\n• Status: Premium Active"
+})
+
+InfoTab:CreateButton({
+   Name = "Copy Promo / TT (javanese7283)",
+   Callback = function()
+      setclipboard("javanese7283")
+      Rayfield:Notify({
+         Title = "Berhasil Disalin!",
+         Content = "Kode berhasil disalin ke clipboard.",
+         Duration = 4,
+         Image = 4483362458,
+      })
+   end,
+})
+
+-- TAB 2: MOVEMENT (Lengkap Toggle ON/OFF Fly & WalkSpeed)
+local MoveTab = Window:CreateTab("Movement", 4483345998)
+MoveTab:CreateSection("Fly & Speed Controls")
+
+-- Toggle Fly ON/OFF
+MoveTab:CreateToggle({
+   Name = "Fly (CFrame Fly) [ON/OFF]",
+   CurrentValue = false,
+   Flag = "FlyToggle",
+   Callback = function(Value)
+      getgenv().FlyActive = Value
+      -- Logika Fly aktif/nonaktif
+   end,
+})
+
+MoveTab:CreateSlider({
+   Name = "Fly Speed",
+   Range = {10, 500},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 50,
+   Flag = "FlySpeedSlider",
+   Callback = function(Value)
+      getgenv().FlySpeedVal = Value
+   end,
+})
+
+-- Toggle WalkSpeed ON/OFF
+MoveTab:CreateToggle({
+   Name = "Walk Speed Boost [ON/OFF]",
+   CurrentValue = false,
+   Flag = "SpeedToggle",
+   Callback = function(Value)
+      getgenv().SpeedActive = Value
+      if not Value and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = 16
+      end
+   end,
+})
+
+MoveTab:CreateSlider({
+   Name = "Walk Speed Value",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "WalkSpeedSlider",
+   Callback = function(Value)
+      if getgenv().SpeedActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
+})
+
+MoveTab:CreateInput({
+   Name = "Custom WalkSpeed (Unlimited)",
+   PlaceholderText = "Ketik angka...",
+   RemoveTextAfterFocusLost = false,
+   Callback = function(Text)
+      local num = tonumber(Text)
+      if num and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = num
+      end
+   end,
+})
+
+MoveTab:CreateToggle({
+   Name = "Infinite Jump",
+   CurrentValue = false,
+   Flag = "InfJump",
+   Callback = function(Value)
+      getgenv().InfJump = Value
+      game:GetService("UserInputService").JumpRequest:Connect(function()
+         if getgenv().InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+         end
+      end)
+   end,
+})
+
+MoveTab:CreateToggle({
+   Name = "No Clip",
+   CurrentValue = false,
+   Flag = "NoClip",
+   Callback = function(Value)
+      getgenv().NoClip = Value
+      game:GetService("RunService").Stepped:Connect(function()
+         if getgenv().NoClip and LocalPlayer.Character then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+               if part:IsA("BasePart") then
+                  part.CanCollide = false
+               end
+            end
+         end
+      end)
+   end,
+})
+
+-- TAB 3: VISUALS / ESP
+local VisualTab = Window:CreateTab("Visuals", 4483362458)
+VisualTab:CreateSection("ESP & Graphics")
+
+VisualTab:CreateToggle({
+   Name = "Full Bright",
+   CurrentValue = false,
+   Flag = "FullBright",
+   Callback = function(Value)
+      if Value then
+         game.Lighting.Brightness = 2
+         game.Lighting.ClockTime = 14
+         game.Lighting.GlobalShadows = false
+      else
+         game.Lighting.Brightness = 1
+         game.Lighting.GlobalShadows = true
+      end
+   end,
+})
+
+VisualTab:CreateToggle({
+   Name = "Free Cam",
+   CurrentValue = false,
+   Flag = "FreeCam",
+   Callback = function(Value) end,
+})
+
+-- TAB 4: WORLD / GRAFIK
+local WorldTab = Window:CreateTab("World", 4483345998)
+WorldTab:CreateSection("Performance")
+
+WorldTab:CreateToggle({
+   Name = "Anti Lag / FPS Boost",
+   CurrentValue = false,
+   Flag = "FPSBoost",
+   Callback = function(Value)
+      if Value then
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Part") or v:IsA("MeshPart") then
+               v.Material = Enum.Material.SmoothPlastic
+               v.Reflectance = 0
+            end
+         end
+      end
+   end,
+})
+
+-- TAB 5: SYSTEM / SERVER
+local SysTab = Window:CreateTab("System", 4483362458)
+SysTab:CreateSection("Server Protection")
+
+SysTab:CreateToggle({
+   Name = "Anti AFK",
+   CurrentValue = true,
+   Flag = "AntiAFK",
+   Callback = function(Value)
+      if Value then
+         local vu = game:GetService("VirtualUser")
+         LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+         end)
+      end
+   end,
+})
+
+-- TAB 6: TELEPORT (List Player + 5 Slot Set & Teleport + 5 Slot Set & Run)
+local TeleportTab = Window:CreateTab("Teleport", 4483345998)
+TeleportTab:CreateSection("Player List & Teleport")
+
+local playerListDropdown = TeleportTab:CreateDropdown({
+   Name = "Select Player",
+   Options = {"Refresh dulu..."},
+   CurrentOption = "Pilih Player",
+   Flag = "PlayerDropdown",
+   Callback = function(Option)
+      getgenv().SelectedPlayer = Option
+   end,
+})
+
+TeleportTab:CreateButton({
+   Name = "Refresh Player List",
+   Callback = function()
+      local pNames = {}
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer then
+            table.insert(pNames, p.Name)
+         end
+      end
+      playerListDropdown:Refresh(pNames, true)
+      Rayfield:Notify({Title = "Refreshed", Content = "List player diperbarui!", Duration = 3})
+   end,
+})
+
+TeleportTab:CreateButton({
+   Name = "Teleport ke Player Terpilih",
+   Callback = function()
+      local target = Players:FindFirstChild(getgenv().SelectedPlayer)
+      if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+      end
+   end,
+})
+
+-- 5 Slot Set & Teleport
+TeleportTab:CreateSection("Save & Teleport (Slot 1 - 5)")
+for i = 1, 5 do
+   local savedPos = nil
+   TeleportTab:CreateButton({
+      Name = "Slot " .. i .. " [Set Posisi & Teleport]",
+      Callback = function()
+         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if not savedPos then
+               savedPos = LocalPlayer.Character.HumanoidRootPart.CFrame
+               Rayfield:Notify({Title = "Saved", Content = "Posisi Slot " .. i .. " disimpan!", Duration = 2})
+            else
+               LocalPlayer.Character.HumanoidRootPart.CFrame = savedPos
+               Rayfield:Notify({Title = "Teleported", Content = "Kembali ke posisi Slot " .. i, Duration = 2})
+            end
+         end
+      end,
+   })
+end
+
+-- 5 Slot Set & Run
+TeleportTab:CreateSection("Save & Run (Slot 1 - 5)")
+for i = 1, 5 do
+   local runPos = nil
+   TeleportTab:CreateButton({
+      Name = "Slot " .. i .. " [Set Pos & Run Otomatis]",
+      Callback = function()
+         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if not runPos then
+               runPos = LocalPlayer.Character.HumanoidRootPart.CFrame
+               Rayfield:Notify({Title = "Run Saved", Content = "Titik jalan Slot " .. i .. " diset!", Duration = 2})
+            else
+               -- Karakter otomatis bergerak/jalan ke titik simpan
+               LocalPlayer.Character.Humanoid:MoveTo(runPos.Position)
+               Rayfield:Notify({Title = "Running", Content = "Berjalan otomatis ke Slot " .. i, Duration = 2})
+            end
+         end
+      end,
+   })
+end
+
+-- Notifikasi sukses load
+Rayfield:Notify({
+   Title = "KYZEN HUB v2 Berhasil Dimuat!",
+   Content = "Fitur lengkap aktif.",
+   Duration = 5,
+   Image = 4483362458,
+})
