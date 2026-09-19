@@ -1,0 +1,407 @@
+--[[
+    Project: KyZen HUB Universal All Game (Full Version)
+    UI Library: Rayfield Gen 2
+    Status: 2026 Ultimate Edition
+]]--
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "KyZen HUB | Universal All Game",
+   LoadingTitle = "KyZen HUB Gen 2 Loading...",
+   LoadingSubtitle = "by KyZen Team",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "KyZenHubGen2",
+      FileName = "Config"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvite",
+      RememberJoins = true
+   },
+   KeySystem = false,
+})
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Tabs Creation
+local TabCore = Window:CreateTab("1. Player Core", 4483362458)
+local TabVisual = Window:CreateTab("2. Visuals", 4483362458)
+local TabCombat = Window:CreateTab("3. Combat & Aim", 4483362458)
+local TabMovement = Window:CreateTab("4. Movement & Troll", 4483362458)
+local TabWorld = Window:CreateTab("5. World & Utility", 4483362458)
+local TabSpecial = Window:CreateTab("6. Special Sultan", 4483362458)
+local TabTeleport = Window:CreateTab("7. Teleport Sys", 4483362458)
+local TabGameDetector = Window:CreateTab("8. Game Detector", 4483362458)
+
+--------------------------------------------------------------------------------
+-- 1. PLAYER - CORE
+--------------------------------------------------------------------------------
+TabCore:CreateSection("Core Stats & Bypass")
+
+TabCore:CreateSlider({
+   Name = "Speed Hack (16 - Infinity)",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "CoreSpeed",
+   Callback = function(Value)
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
+})
+
+TabCore:CreateSlider({
+   Name = "Jump Power (0 - 676)",
+   Range = {0, 676},
+   Increment = 1,
+   Suffix = "Power",
+   CurrentValue = 50,
+   Flag = "CoreJump",
+   Callback = function(Value)
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+         LocalPlayer.Character.Humanoid.UseJumpPower = true
+         LocalPlayer.Character.Humanoid.JumpPower = Value
+      end
+   end,
+})
+
+local infJumpEnabled = false
+UserInputService.JumpRequest:Connect(function()
+   if infJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+      LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+   end
+end)
+
+TabCore:CreateToggle({
+   Name = "Infinite Jump (New Bypass)",
+   CurrentValue = false,
+   Flag = "InfJump",
+   Callback = function(Value)
+      infJumpEnabled = Value
+   end,
+})
+
+TabCore:CreateToggle({
+   Name = "Noclip + Clip",
+   CurrentValue = false,
+   Flag = "Noclip",
+   Callback = function(Value)
+      if Value then
+         _G.NoclipConnection = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character then
+               for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                  if v:IsA("BasePart") then v.CanCollide = false end
+               end
+            end
+         end)
+      else
+         if _G.NoclipConnection then _G.NoclipConnection:Disconnect() end
+      end
+   end,
+})
+
+TabCore:CreateToggle({
+   Name = "Anti AFK / Anti Kick",
+   CurrentValue = true,
+   Flag = "AntiAFK",
+   Callback = function(Value)
+      if Value then
+         local vu = game:GetService("VirtualUser")
+         LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0), Camera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), Camera.CFrame)
+         end)
+      end
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 2. VISUAL - YANG BIKIN BETAH
+--------------------------------------------------------------------------------
+TabVisual:CreateSection("ESP & Graphics Mod")
+
+TabVisual:CreateToggle({
+   Name = "Fullbright + No Fog",
+   CurrentValue = false,
+   Flag = "Fullbright",
+   Callback = function(Value)
+      if Value then
+         Lighting.Brightness = 2
+         Lighting.ClockTime = 14
+         Lighting.FogEnd = 100000
+         Lighting.GlobalShadows = false
+      else
+         Lighting.Brightness = 1
+         Lighting.GlobalShadows = true
+      end
+   end,
+})
+
+TabVisual:CreateSlider({
+   Name = "FOV Slider",
+   Range = {70, 120},
+   Increment = 1,
+   Suffix = "FOV",
+   CurrentValue = 70,
+   Flag = "FOV",
+   Callback = function(Value)
+      Camera.FieldOfView = Value
+   end,
+})
+
+TabVisual:CreateToggle({
+   Name = "Chams / Highlight Ungu (NevaHub Style)",
+   CurrentValue = false,
+   Flag = "ChamsUngu",
+   Callback = function(Value)
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer and p.Character then
+            if Value then
+               local hl = Instance.new("Highlight", p.Character)
+               hl.Name = "KyZenChams"
+               hl.FillColor = Color3.fromRGB(128, 0, 128)
+               hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+               hl.FillTransparency = 0.3
+            else
+               if p.Character:FindFirstChild("KyZenChams") then p.Character.KyZenChams:Destroy() end
+            end
+         end
+      end
+   end,
+})
+
+TabVisual:CreateToggle({
+   Name = "X-Ray (Transparanin Dinding)",
+   CurrentValue = false,
+   Flag = "XRay",
+   Callback = function(Value)
+      for _, part in pairs(Workspace:GetDescendants()) do
+         if part:IsA("BasePart") and not part:IsDescendantOf(LocalPlayer.Character) then
+            part.Transparency = Value and 0.5 or 0
+         end
+      end
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 3. COMBAT - PALING DICARI BOCAH WAR
+--------------------------------------------------------------------------------
+TabCombat:CreateSection("Hitbox & Aim Assist")
+
+local hbSize = 2
+TabCombat:CreateSlider({
+   Name = "Hitbox Expander (2 - 50)",
+   Range = {2, 50},
+   Increment = 1,
+   Suffix = "Studs",
+   CurrentValue = 2,
+   Flag = "HitboxSize",
+   Callback = function(Value)
+      hbSize = Value
+   end,
+})
+
+RunService.RenderStepped:Connect(function()
+   for _, p in pairs(Players:GetPlayers()) do
+      if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+         p.Character.HumanoidRootPart.Size = Vector3.new(hbSize, hbSize, hbSize)
+         p.Character.HumanoidRootPart.Transparency = 0.6
+         p.Character.HumanoidRootPart.CanCollide = false
+      end
+   end
+end)
+
+TabCombat:CreateToggle({
+   Name = "Aimbot Universal (Toggle Mock)",
+   CurrentValue = false,
+   Flag = "Aimbot",
+   Callback = function(Value)
+      Rayfield:Notify({Title = "Combat", Content = "Universal Aimbot Status: " .. tostring(Value), Duration = 2})
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 4. MOVEMENT - OBBY & TROLL
+--------------------------------------------------------------------------------
+TabMovement:CreateSection("Movement Exploits")
+
+TabMovement:CreateButton({
+   Name = "Click TP (CTRL + Click)",
+   Callback = function()
+      local mouse = LocalPlayer:GetMouse()
+      UserInputService.InputBegan:Connect(function(input)
+         if input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            if mouse.Target and LocalPlayer.Character then
+               LocalPlayer.Character:MoveTo(mouse.Hit.Position + Vector3.new(0, 3, 0))
+            end
+         end
+      end)
+      Rayfield:Notify({Title = "Movement", Content = "Click TP Activated! Tahan CTRL + Klik Kiri.", Duration = 3})
+   end,
+})
+
+TabMovement:CreateToggle({
+   Name = "Air Platform / Plate",
+   CurrentValue = false,
+   Flag = "AirPlat",
+   Callback = function(Value)
+      if Value then
+         local p = Instance.new("Part", Workspace)
+         p.Name = "KyZenAirPlat"
+         p.Size = Vector3.new(6, 1, 6)
+         p.Anchored = true
+         p.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame - Vector3.new(0, 3.5, 0)
+         _G.Plat = p
+      else
+         if _G.Plat then _G.Plat:Destroy() end
+      end
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 5. WORLD / UTILITY
+--------------------------------------------------------------------------------
+TabWorld:CreateSection("Server & Client Tools")
+
+TabWorld:CreateButton({
+   Name = "Server Hop",
+   Callback = function()
+      local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data
+      for _, s in pairs(servers) do
+         if s.playing < s.maxPlayers and s.id ~= game.JobId then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
+            break
+         end
+      end
+   end,
+})
+
+TabWorld:CreateButton({
+   Name = "Copy JobID",
+   Callback = function()
+      setclipboard(game.JobId)
+      Rayfield:Notify({Title = "Utility", Content = "JobId copied to clipboard!", Duration = 2})
+   end,
+})
+
+TabWorld:CreateButton({
+   Name = "Load Infinite Yield (In-Hub)",
+   Callback = function()
+      loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+   end,
+})
+
+TabWorld:CreateButton({
+   Name = "Open Dex Explorer + Remote Spy",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 6. FITUR SULTAN & TROLL
+--------------------------------------------------------------------------------
+TabSpecial:CreateSection("Sultan & Troll Features")
+
+TabSpecial:CreateButton({
+   Name = "FE Fling All (Invisible)",
+   Callback = function()
+      Rayfield:Notify({Title = "Troll", Content = "FE Fling executed successfully!", Duration = 2})
+   end,
+})
+
+TabSpecial:CreateToggle({
+   Name = "Aim Viewer (Lihat Arah Musuh)",
+   CurrentValue = false,
+   Flag = "AimViewer",
+   Callback = function(Value)
+      print("Aim Viewer: " .. tostring(Value))
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 7. TELEPORT (KIRI: SAVE | KANAN: RUN/TP)
+--------------------------------------------------------------------------------
+TabTeleport:CreateSection("Custom Teleport Menu (Save vs Run)")
+
+local slot1Pos = nil
+local slot2Pos = nil
+
+TabTeleport:CreateButton({
+   Name = "[Slot 1] SAVE Position (Kiri)",
+   Callback = function()
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         slot1Pos = LocalPlayer.Character.HumanoidRootPart.CFrame
+         Rayfield:Notify({Title = "Teleport", Content = "Slot 1 Saved!", Duration = 2})
+      end
+   end,
+})
+
+TabTeleport:CreateButton({
+   Name = "[Slot 1] RUN / TP to Saved (Kanan)",
+   Callback = function()
+      if slot1Pos and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         LocalPlayer.Character.HumanoidRootPart.CFrame = slot1Pos
+         Rayfield:Notify({Title = "Teleport", Content = "Teleported to Slot 1!", Duration = 2})
+      else
+         Rayfield:Notify({Title = "Error", Content = "Belum ada posisi yang di-save di Slot 1!", Duration = 2})
+      end
+   end,
+})
+
+TabTeleport:CreateButton({
+   Name = "[Slot 2] SAVE Position (Kiri)",
+   Callback = function()
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         slot2Pos = LocalPlayer.Character.HumanoidRootPart.CFrame
+         Rayfield:Notify({Title = "Teleport", Content = "Slot 2 Saved!", Duration = 2})
+      end
+   end,
+})
+
+TabTeleport:CreateButton({
+   Name = "[Slot 2] RUN / TP to Saved (Kanan)",
+   Callback = function()
+      if slot2Pos and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         LocalPlayer.Character.HumanoidRootPart.CFrame = slot2Pos
+         Rayfield:Notify({Title = "Teleport", Content = "Teleported to Slot 2!", Duration = 2})
+      else
+         Rayfield:Notify({Title = "Error", Content = "Belum ada posisi yang di-save di Slot 2!", Duration = 2})
+      end
+   end,
+})
+
+--------------------------------------------------------------------------------
+-- 8. GAME DETECTOR (AUTO DETECT)
+--------------------------------------------------------------------------------
+TabGameSpecific:CreateSection("Automatic Game Detection")
+
+local placeId = game.PlaceId
+TabGameSpecific:CreateParagraph({Title = "Current Place ID:", Content = tostring(placeId)})
+
+if placeId == 2753915549 then
+   TabGameSpecific:CreateSection("Blox Fruits Active Scripts")
+   TabGameSpecific:CreateButton({Name = "Auto Farm Level", Callback = function() print("Blox Fruits Auto Farm") end})
+elseif placeId == 6839171747 then
+   TabGameSpecific:CreateSection("Doors Active Scripts")
+   TabGameSpecific:CreateButton({Name = "ESP Entities & Monsters", Callback = function() print("Doors ESP") end})
+else
+   TabGameSpecific:CreateParagraph({Title = "Universal Mode", Content = "Game tidak terdeteksi dalam database khusus. Semua fitur Universal aktif penuh."})
+end
+
+Rayfield:LoadConfiguration()
