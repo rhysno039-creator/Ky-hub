@@ -1,0 +1,357 @@
+-- =====================================================================
+-- KYZEN HUB v2 - ADVANCED MOVEMENT MENU (Fly Fix: No Spin/Shake)
+-- =====================================================================
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Global Flags & Default Values
+getgenv().Flags = {
+   Fly = false,
+   FlySpeed = 50,
+   ShiftLock = false,
+   Speed = false,
+   SpeedValue = 16,
+   PhaseWalk = false,
+   PhaseSpeed = 20,
+   GravityActive = false,
+   GravityValue = 30,
+   WallClimb = false,
+   JumpPowerActive = false,
+   JumpPowerValue = 50,
+   InfAirJump = false,
+   BunnyHop = false,
+   NoClip = false,
+   NoSlow = false
+}
+
+local DefaultGravity = Workspace.Gravity
+local flyGyro, flyVelocity -- Variabel untuk stabilisasi terbang
+
+local function getHumanoid()
+   local char = LocalPlayer.Character
+   if char then
+      return char:FindFirstChildOfClass("Humanoid")
+   end
+   return nil
+end
+
+local function getRootPart()
+   local char = LocalPlayer.Character
+   if char then
+      return char:FindFirstChild("HumanoidRootPart")
+   end
+   return nil
+end
+
+local Window = Rayfield:CreateWindow({
+   Name = "KYZEN HUB v2 | Advanced Movement",
+   LoadingTitle = "KYZEN HUB",
+   LoadingSubtitle = "Elite Movement Module",
+   ConfigurationSaving = { Enabled = false }
+})
+
+local MoveTab = Window:CreateTab("Movement", 4483345998)
+
+-- ==========================================
+-- SECTION: FLIGHT & SPEED
+-- ==========================================
+MoveTab:CreateSection("Flight & Speed Control")
+
+MoveTab:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flags.Fly = Value
+        local hum = getHumanoid()
+        local root = getRootPart()
+        
+        if not Value then
+            Workspace.Gravity = DefaultGravity
+            if hum then
+                hum.PlatformStand = false
+                hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
+            -- Hapus penstabil saat fly dimatikan agar tidak nyangkut
+            if flyGyro then flyGyro:Destroy() flyGyro = nil end
+            if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+        else
+            DefaultGravity = Workspace.Gravity
+            if hum then
+                hum:ChangeState(Enum.HumanoidStateType.Physics)
+            end
+            if root and not flyGyro then
+                -- BodyGyro untuk mengunci agar karakter tidak berputar-putar liar
+                flyGyro = Instance.new("BodyGyro")
+                flyGyro.Name = "KyzenFlyGyro"
+                flyGyro.P = 9e4
+                flyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+                flyGyro.CFrame = root.CFrame
+                flyGyro.Parent = root
+            end
+            if root and not flyVelocity then
+                flyVelocity = Instance.new("BodyVelocity")
+                flyVelocity.Name = "KyzenFlyVelocity"
+                flyVelocity.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+                flyVelocity.Velocity = Vector3.new(0, 0, 0)
+                flyVelocity.Parent = root
+            end
+        end
+    end
+})
+
+MoveTab:CreateInput({
+    Name = "Fly Speed",
+    PlaceholderText = "50",
+    RemoveTextOnFocus = false,
+    Callback = function(Text) Flags.FlySpeed = tonumber(Text) or 50 end
+})
+
+-- Logika Utama Pergerakan Fly & Shift Lock (Anti-Goyang & Anti-Spin)
+RunService.RenderStepped:Connect(function()
+    local root = getRootPart()
+    local hum = getHumanoid()
+    
+    -- Shift Lock Logic
+    if Flags.ShiftLock and not Flags.Fly and root then
+        local lookVector = Camera.CFrame.LookVector
+        root.CFrame = CFrame.new(root.Position, root.Position + Vector3.new(lookVector.X, 0, lookVector.Z))
+    end
+
+    -- Fly Movement Logic (Diperbaiki agar mulus dan stabil tanpa layar goyang)
+    if Flags.Fly and root and hum then
+        hum.PlatformStand = true
+        
+        if flyGyro then
+            flyGyro.CFrame = Camera.CFrame
+        end
+        
+        local moveDir = Vector3.new(0, 0, 0)
+        local camCF = Camera.CFrame
+        
+        -- Deteksi tombol keyboard atau arah analog HP yang mulus
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) or hum.MoveDirection.Magnitude > 0 then
+            moveDir = moveDir + camCF.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDir = moveDir - camCF.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir = moveDir + camCF.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDir = moveDir - camCF.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDir = moveDir + Vector3.new(0, 1, 0)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            moveDir = moveDir - Vector3.new(0, 1, 0)
+        end
+        
+        -- Jika menggunakan analog HP, integrasikan arah gerak humanoid secara langsung
+        if hum.MoveDirection.Magnitude > 0 and not UserInputService:IsKeyDown(Enum.KeyCode.W) and not UserInputService:IsKeyDown(Enum.KeyCode.S) and not UserInputService:IsKeyDown(Enum.KeyCode.A) and not UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir = camCF:VectorToWorldSpace(Vector3.new(hum.MoveDirection.X, 0, hum.MoveDirection.Z))
+        end
+
+        if flyVelocity then
+            flyVelocity.Velocity = moveDir * Flags.FlySpeed
+        else
+            root.Velocity = moveDir * Flags.FlySpeed
+        end
+    else
+        if flyGyro then flyGyro:Destroy() flyGyro = nil end
+        if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if Flags.Speed then
+        local hum = getHumanoid()
+        if hum then
+            hum.WalkSpeed = Flags.SpeedValue
+        end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Velocity Sprint",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flags.Speed = Value
+        if not Value then
+            local hum = getHumanoid()
+            if hum then hum.WalkSpeed = 16 end
+        end
+    end
+})
+
+MoveTab:CreateInput({
+    Name = "Sprint Multiplier",
+    PlaceholderText = "16",
+    RemoveTextOnFocus = false,
+    Callback = function(Text) Flags.SpeedValue = tonumber(Text) or 16 end
+})
+
+-- ==========================================
+-- SECTION: SPECIAL MOVEMENT MODES
+-- ==========================================
+MoveTab:CreateSection("Special Movement Modes")
+
+RunService.RenderStepped:Connect(function()
+    if Flags.PhaseWalk then
+        local hum = getHumanoid()
+        local root = getRootPart()
+        if hum and root and hum.MoveDirection.Magnitude > 0 then
+            root.CFrame = root.CFrame + (hum.MoveDirection * (Flags.PhaseSpeed / 50))
+        end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Phase Walk",
+    CurrentValue = false,
+    Callback = function(Value) Flags.PhaseWalk = Value end
+})
+
+MoveTab:CreateInput({
+    Name = "Phase Walk Velocity",
+    PlaceholderText = "20",
+    RemoveTextOnFocus = false,
+    Callback = function(Text) Flags.PhaseSpeed = tonumber(Text) or 20 end
+})
+
+MoveTab:CreateToggle({
+    Name = "Zero-G Levitation",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flags.GravityActive = Value
+        Workspace.Gravity = Value and Flags.GravityValue or 196.2
+    end
+})
+
+MoveTab:CreateInput({
+    Name = "Gravity Scale",
+    PlaceholderText = "30",
+    RemoveTextOnFocus = false,
+    Callback = function(Text)
+        Flags.GravityValue = tonumber(Text) or 30
+        if Flags.GravityActive then Workspace.Gravity = Flags.GravityValue end
+    end
+})
+
+RunService.Stepped:Connect(function()
+    if Flags.WallClimb then
+        local root = getRootPart()
+        if root then
+            local params = RaycastParams.new()
+            params.FilterDescendantsInstances = {LocalPlayer.Character}
+            params.FilterType = Enum.RaycastFilterType.Exclude
+            local result = Workspace:Raycast(root.Position, root.CFrame.LookVector * 3, params)
+            if result and result.Instance then
+                root.Velocity = Vector3.new(root.Velocity.X, 60, root.Velocity.Z)
+            end
+        end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Surface Vertical Climb",
+    CurrentValue = false,
+    Callback = function(Value) Flags.WallClimb = Value end
+})
+
+-- ==========================================
+-- SECTION: JUMP & UTILITIES
+-- ==========================================
+MoveTab:CreateSection("Jump & Utilities")
+
+MoveTab:CreateToggle({
+    Name = "Enhanced Jump Power",
+    CurrentValue = false,
+    Callback = function(Value) Flags.JumpPowerActive = Value end
+})
+
+MoveTab:CreateInput({
+    Name = "Jump Power Value",
+    PlaceholderText = "50",
+    RemoveTextOnFocus = false,
+    Callback = function(Text)
+        Flags.JumpPowerValue = tonumber(Text) or 50
+        local hum = getHumanoid()
+        if hum then
+            hum.JumpPower = Flags.JumpPowerValue
+            hum.UseJumpPower = true
+        end
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if Flags.InfAirJump then
+        local hum = getHumanoid()
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Infinite Air Jump",
+    CurrentValue = false,
+    Callback = function(Value) Flags.InfAirJump = Value end
+})
+
+RunService.RenderStepped:Connect(function()
+    if Flags.BunnyHop then
+        local hum = getHumanoid()
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Hyper Bunny Hop",
+    CurrentValue = false,
+    Callback = function(Value) Flags.BunnyHop = Value end
+})
+
+RunService.Stepped:Connect(function()
+    if Flags.NoClip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Ghost Phase",
+    CurrentValue = false,
+    Callback = function(Value) Flags.NoClip = Value end
+})
+
+MoveTab:CreateToggle({
+    Name = "Forced Camera Lock",
+    CurrentValue = false,
+    Callback = function(Value) Flags.ShiftLock = Value end
+})
+
+RunService.Stepped:Connect(function()
+    if Flags.NoSlow then
+        local hum = getHumanoid()
+        if hum then hum.WalkSpeed = Flags.Speed and Flags.SpeedValue or 16 end
+    end
+end)
+
+MoveTab:CreateToggle({
+    Name = "Status Immunity",
+    CurrentValue = false,
+    Callback = function(Value) Flags.NoSlow = Value end
+})
+
+Rayfield:Notify({
+   Title = "Fly Stabilizer Ditambahkan!",
+   Content = "Masalah layar goyang dan karakter berputar saat terbang telah diperbaiki.",
+   Duration = 5,
+})
