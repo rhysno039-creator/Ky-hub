@@ -1,0 +1,371 @@
+local success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+end)
+
+if not success or not WindUI then
+    warn("Gagal memuat WindUI, pastikan executor mendukung fungsi HTTP.")
+    return
+end
+
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB : Universal All Game",
+    Icon = "rbxassetid://4483362458",
+    Author = "Kyzen868 (2026 Edition)",
+    Folder = "KyZenHub",
+    Size = UDim2.fromOffset(600, 480),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Global Variabel Fitur
+_G.InfJump = false
+_G.Noclip = false
+_G.SpeedEnabled = false
+_G.SpeedVal = 16
+_G.JumpEnabled = false
+_G.JumpVal = 50
+_G.Aimbot = false
+_G.FlyEnabled = false
+_G.FlySpeed = 50
+_G.Fullbright = false
+_G.RemoveWall = false
+_G.HitboxEnabled = false
+_G.HitboxSize = 2
+_G.AntiAFK = false
+_G.AntiKick = false
+_G.AntiRejoin = false
+_G.InvisibleFE = false
+_G.InfiniteYieldLoaded = false
+_G.Freecam = false
+_G.BunnyHop = false
+_G.AirPlatform = false
+_G.FakeLag = false
+
+-- Game Detector Otomatis
+local DetectedGameName = "Universal Game"
+if game.PlaceId == 2753915549 or game.PlaceId == 4442272183 or game.PlaceId == 7449423635 then
+   DetectedGameName = "Blox Fruits"
+elseif game.PlaceId == 6516141723 then
+   DetectedGameName = "Doors"
+end
+
+-- ==========================================
+-- MEMBUAT TAB MENU
+-- ==========================================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+local InfoTab = Window:Tab({ Title = "Informasi", Icon = "info" })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+local VisualTab = Window:Tab({ Title = "Visual", Icon = "eye" })
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
+local MovementTab = Window:Tab({ Title = "Movement", Icon = "activity" })
+local TeleportTab = Window:Tab({ Title = "Teleport", Icon = "map-pin" })
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+local TrollFETab = Window:Tab({ Title = "Troll FE", Icon = "smile" })
+local UtilityTab = Window:Tab({ Title = "Utility OP", Icon = "star" })
+
+-- ==========================================
+-- 1. HOME TAB
+-- ==========================================
+HomeTab:Paragraph({
+    Title = "Status Akun & Game Detector",
+    Desc = "Username: " .. LocalPlayer.Name .. "\nDisplay Name: " .. LocalPlayer.DisplayName .. "\nGame Terdeteksi: " .. DetectedGameName .. "\nPlaceId: " .. game.PlaceId
+})
+
+HomeTab:Button({
+    Title = "Salin Link Saluran WhatsApp",
+    Callback = function()
+        pcall(function() setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J") end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Link Saluran disalin ke clipboard!", Duration = 3 })
+    end
+})
+
+HomeTab:Button({
+    Title = "Salin Nama TikTok (Kyzen868)",
+    Callback = function()
+        pcall(function() setclipboard("Kyzen868") end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Nama TikTok disalin ke clipboard!", Duration = 3 })
+    end
+})
+
+HomeTab:Button({
+    Title = "Destroy UI (Tutup Hub)",
+    Callback = function()
+        Window:Destroy()
+    end
+})
+
+-- ==========================================
+-- 2. INFORMASI TAB
+-- ==========================================
+InfoTab:Paragraph({
+    Title = "Cara Kerja Script",
+    Desc = "Script ini memanfaatkan pemanggilan fungsi Universal (Remote & Character Manipulation) yang dieksekusi secara aman melalui Executor."
+})
+
+InfoTab:Paragraph({
+    Title = "Informasi Update",
+    Desc = "- Pemulihan kestabilan WindUI.\n- Penambahan sistem input ketik.\n- Integrasi Player List & fitur OP."
+})
+
+-- ==========================================
+-- 3. PLAYER TAB
+-- ==========================================
+PlayerTab:Toggle({
+    Title = "Status Speed On/Off",
+    Default = false,
+    Callback = function(Value)
+        _G.SpeedEnabled = Value
+    end
+})
+
+PlayerTab:Input({
+    Title = "Speed (Ketik Angka)",
+    Default = "16",
+    Placeholder = "Masukkan angka speed...",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then _G.SpeedVal = num end
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if _G.SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedVal
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Status Jump Power On/Off",
+    Default = false,
+    Callback = function(Value)
+        _G.JumpEnabled = Value
+    end
+})
+
+PlayerTab:Input({
+    Title = "Jump Power (0 - 676)",
+    Default = "50",
+    Placeholder = "Masukkan angka jump...",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then _G.JumpVal = num end
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if _G.JumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.UseJumpPower = true
+        LocalPlayer.Character.Humanoid.JumpPower = _G.JumpVal
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Infinite Jump",
+    Default = false,
+    Callback = function(Value)
+        _G.InfJump = Value
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if _G.InfJump and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "No clip",
+    Default = false,
+    Callback = function(Value)
+        _G.Noclip = Value
+    end
+})
+
+RunService.Stepped:Connect(function()
+    if _G.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+PlayerTab:Toggle({Title = "Anti AFK", Default = false, Callback = function(Value) _G.AntiAFK = Value end})
+PlayerTab:Toggle({Title = "Anti Kick", Default = false, Callback = function(Value) _G.AntiKick = Value end})
+PlayerTab:Toggle({Title = "Anti Rejoin", Default = false, Callback = function(Value) _G.AntiRejoin = Value end})
+
+-- ==========================================
+-- 4. VISUAL TAB
+-- ==========================================
+VisualTab:Toggle({
+    Title = "Player Chams / Highlight",
+    Default = false,
+    Callback = function(Value)
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                if Value then
+                    local hl = Instance.new("Highlight", p.Character)
+                    hl.Name = "KyZenChams"
+                else
+                    if p.Character:FindFirstChild("KyZenChams") then p.Character.KyZenChams:Destroy() end
+                end
+            end
+        end
+    end
+})
+
+VisualTab:Toggle({
+    Title = "Fullbright",
+    Default = false,
+    Callback = function(Value)
+        Lighting.Brightness = Value and 2 or 1
+        Lighting.GlobalShadows = not Value
+    end
+})
+
+VisualTab:Input({
+    Title = "FOV (Ketikan 70 - 120)",
+    Default = "70",
+    Placeholder = "70 sampai 120",
+    Callback = function(Text)
+        local val = tonumber(Text)
+        if val and val >= 70 and val <= 120 then Camera.FieldOfView = val end
+    end
+})
+
+-- ==========================================
+-- 5. COMBAT TAB
+-- ==========================================
+CombatTab:Toggle({
+    Title = "Aimbot Universal",
+    Default = false,
+    Callback = function(Value)
+        _G.Aimbot = Value
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if _G.Aimbot then
+        pcall(function()
+            local target, dist = nil, math.huge
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    local mag = (p.Character.Head.Position - Camera.CFrame.Position).Magnitude
+                    if mag < dist then dist = mag target = p.Character.Head end
+                end
+            end
+            if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position) end
+        end)
+    end
+end)
+
+CombatTab:Toggle({Title = "Hitbox Expander On/Off", Default = false, Callback = function(Value) _G.HitboxEnabled = Value end})
+CombatTab:Input({Title = "Hitbox Size (2 - 50)", Default = "2", Placeholder = "Ukuran...", Callback = function(Text) local val = tonumber(Text) if val then _G.HitboxSize = val end end})
+
+RunService.RenderStepped:Connect(function()
+    if _G.HitboxEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                p.Character.HumanoidRootPart.Transparency = 0.7
+                p.Character.HumanoidRootPart.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- ==========================================
+-- 6. MOVEMENT TAB
+-- ==========================================
+MovementTab:Toggle({Title = "Fly Fitur On/Off", Default = false, Callback = function(Value) _G.FlyEnabled = Value end})
+MovementTab:Input({Title = "Fly Speed", Default = "50", Placeholder = "Kecepatan...", Callback = function(Text) local val = tonumber(Text) if val then _G.FlySpeed = val end end})
+
+RunService.RenderStepped:Connect(function()
+    if _G.FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0, 1, 0) * _G.FlySpeed
+    end
+end)
+
+MovementTab:Toggle({Title = "High Jump + Bunny Hop", Default = false, Callback = function(Value) _G.BunnyHop = Value end})
+RunService.RenderStepped:Connect(function()
+    if _G.BunnyHop and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        if LocalPlayer.Character.Humanoid.FloorMaterial ~= Enum.Material.Air then LocalPlayer.Character.Humanoid:Jump() end
+    end
+end)
+
+-- ==========================================
+-- 7. TELEPORT TAB
+-- ==========================================
+TeleportTab:Paragraph({Title = "Teleport Player", Desc = "Pilih player target di bawah."})
+local SelectedTargetPlayer = nil
+local PlayerNamesList = {}
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then table.insert(PlayerNamesList, p.Name) end
+end
+
+TeleportTab:Dropdown({
+    Title = "Pilih Target Player",
+    Values = PlayerNamesList,
+    Default = 1,
+    Callback = function(Option) SelectedTargetPlayer = Option end
+})
+
+TeleportTab:Button({
+    Title = "Teleport ke Player Terpilih",
+    Callback = function()
+        if SelectedTargetPlayer then
+            local target = Players:FindFirstChild(SelectedTargetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+            end
+        end
+    end
+})
+
+-- ==========================================
+-- 8. WORLD TAB
+-- ==========================================
+WorldTab:Toggle({Title = "FPS Booster On/Off", Default = false, Callback = function(Value)
+    for _, e in pairs(workspace:GetDescendants()) do
+        if e:IsA("ParticleEmitter") or e:IsA("Trail") then e.Enabled = not Value end
+    end
+end})
+
+WorldTab:Button({Title = "Rejoin Game", Callback = function()
+    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+end})
+
+-- ==========================================
+-- 9. TROLL FE TAB
+-- ==========================================
+TrollFETab:Toggle({Title = "Invisible FE On/Off", Default = false, Callback = function(Value)
+    pcall(function()
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") or part:IsA("Decal") then part.Transparency = Value and 1 or 0 end
+        end
+    end)
+end})
+
+-- ==========================================
+-- 10. UTILITY OP TAB
+-- ==========================================
+UtilityTab:Toggle({Title = "Load Infinite Yield (Admin)", Default = false, Callback = function(Value)
+    if Value and not _G.InfiniteYieldLoaded then
+        _G.InfiniteYieldLoaded = true
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end
+end})
+
+WindUI:Notify({
+    Title = "KyZen HUB",
+    Content = "Berhasil dimuat menggunakan WindUI!",
+    Duration = 4
+})
