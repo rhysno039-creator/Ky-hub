@@ -1,0 +1,260 @@
+-- ==================== MENU PLAYER ====================
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+-- Variabel Player & Layanan
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+
+LocalPlayer.CharacterAdded:Connect(function(newChar)
+    Character = newChar
+    Humanoid = newChar:WaitForChild("Humanoid")
+    RootPart = newChar:WaitForChild("HumanoidRootPart")
+end)
+
+-- Anti-Detect Bypass Helper (Mengaburkan hook / meminimalkan deteksi anti-cheat server)
+local function BypassAntiDetect()
+    pcall(function()
+        if getgenv and getgenv().setscriptable then
+            getgenv().setscriptable(Humanoid, "WalkSpeed", true)
+            getgenv().setscriptable(Humanoid, "JumpPower", true)
+        end
+    end)
+end
+BypassAntiDetect()
+
+-- 1. FLY TOGGLE (Anti Detect)
+PlayerTab:Section({ Title = "1. Fly Mode" })
+
+local flying = false
+local flySpeed = 50
+local flyConnection
+
+PlayerTab:Toggle({
+    Title = "Fly Toggle (On/Off)",
+    Default = false,
+    Callback = function(state)
+        flying = state
+        BypassAntiDetect()
+        if flying then
+            WindUI:Notify({ Title = "Anti-Detect Fly", Content = "Fly diaktifkan dengan keamanan tinggi.", Duration = 2 })
+            local camera = workspace.CurrentCamera
+            flyConnection = RunService.RenderStepped:Connect(function()
+                if not flying or not RootPart or not Humanoid then return end
+                local velocity = Vector3.new(0, 0, 0)
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then velocity = velocity + camera.CoordinateFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then velocity = velocity - camera.CoordinateFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then velocity = velocity - camera.CoordinateFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then velocity = velocity + camera.CoordinateFrame.RightVector end
+                RootPart.Velocity = velocity * flySpeed
+                RootPart.RotVelocity = Vector3.new(0,0,0)
+            end)
+        else
+            if flyConnection then flyConnection:Disconnect() end
+            WindUI:Notify({ Title = "Fly Dimatikan", Content = "Fly dinonaktifkan.", Duration = 2 })
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Atur Kecepatan Fly",
+    Placeholder = "Contoh: 50",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then flySpeed = num end
+    end
+})
+
+
+-- 2. WALK SPEED & MOON WALK (Anti Detect)
+PlayerTab:Section({ Title = "2. WalkSpeed & Movement" })
+
+local defaultWalkSpeed = 16
+local customWalkSpeed = 16
+local walkSpeedEnabled = false
+
+PlayerTab:Input({
+    Title = "Ketik WalkSpeed / MoonWalk Speed",
+    Placeholder = "Contoh: 35",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            customWalkSpeed = num
+            if walkSpeedEnabled and Humanoid then
+                BypassAntiDetect()
+                Humanoid.WalkSpeed = customWalkSpeed
+            end
+            WindUI:Notify({ Title = "Speed Diatur", Content = "Kecepatan diatur ke: " .. num, Duration = 2 })
+        end
+    end
+})
+
+-- Loop Anti-Reset Anti-Cheat untuk WalkSpeed
+RunService.Heartbeat:Connect(function()
+    if walkSpeedEnabled and Humanoid then
+        if Humanoid.WalkSpeed ~= customWalkSpeed then
+            Humanoid.WalkSpeed = customWalkSpeed
+        end
+    end
+end)
+
+
+-- 3. JUMP POWER TOGGLE & INPUT (Anti Detect)
+PlayerTab:Section({ Title = "3. Jump Power" })
+
+local customJumpPower = 50
+local jumpPowerEnabled = false
+
+PlayerTab:Toggle({
+    Title = "Jump Power Toggle (On/Off)",
+    Default = false,
+    Callback = function(state)
+        jumpPowerEnabled = state
+        BypassAntiDetect()
+        if Humanoid then
+            Humanoid.UseJumpPower = true
+            Humanoid.JumpPower = jumpPowerEnabled and customJumpPower or 50
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Ketik Jumlah JumpPower",
+    Placeholder = "Contoh: 100",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            customJumpPower = num
+            if jumpPowerEnabled and Humanoid then
+                BypassAntiDetect()
+                Humanoid.JumpPower = customJumpPower
+            end
+        end
+    end
+})
+
+
+-- 4. INF JUMP & NOCLIP (Anti Detect)
+PlayerTab:Section({ Title = "4. Extra Movement" })
+
+-- Inf Jump
+local infJumpEnabled = false
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled and Humanoid then
+        BypassAntiDetect()
+        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Infinite Jump (On/Off)",
+    Default = false,
+    Callback = function(state)
+        infJumpEnabled = state
+        WindUI:Notify({ Title = "Inf Jump", Content = state ? "Aktif" : "Mati", Duration = 2 })
+    end
+})
+
+-- Noclip
+local noclipEnabled = false
+RunService.Stepped:Connect(function()
+    if noclipEnabled and Character then
+        for _, part in pairs(Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Noclip (On/Off)",
+    Default = false,
+    Callback = function(state)
+        noclipEnabled = state
+        WindUI:Notify({ Title = "Noclip", Content = state ? "Aktif" : "Mati", Duration = 2 })
+    end
+})
+
+
+-- 5. UTILITY & PROTECTION (Reset, Anti AFK, Anti Rejoin, Anti Kick)
+PlayerTab:Section({ Title = "5. Protection & Utility" })
+
+PlayerTab:Button({
+    Title = "Reset Character",
+    Callback = function()
+        if Humanoid then
+            Humanoid.Health = 0
+            WindUI:Notify({ Title = "Reset", Content = "Karakter di-reset dengan aman.", Duration = 2 })
+        end
+    end
+})
+
+-- Anti AFK
+local antiAfkEnabled = false
+local vu = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+    if antiAfkEnabled then
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        WindUI:Notify({ Title = "Anti-AFK", Content = "Mencegah kick karena AFK.", Duration = 2 })
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Anti AFK (On/Off)",
+    Default = false,
+    Callback = function(state)
+        antiAfkEnabled = state
+        WindUI:Notify({ Title = "Anti-AFK", Content = state ? "Aktif" : "Mati", Duration = 2 })
+    end
+})
+
+-- Anti Rejoin (Mencegah teleport otomatis yang tidak diinginkan oleh server)
+local antiRejoinEnabled = false
+local originalJobId = game.JobId
+game:GetService("TeleportService")
+local tpSignal
+PlayerTab:Toggle({
+    Title = "Anti Rejoin (On/Off)",
+    Default = false,
+    Callback = function(state)
+        antiRejoinEnabled = state
+        if state then
+            tpSignal = game:GetService("TeleportService").TeleportInitFailed:Connect(function(player, teleportResult)
+                if player == LocalPlayer and antiRejoinEnabled then
+                    WindUI:Notify({ Title = "Anti-Rejoin", Content = "Teleport paksa dari server diblokir!", Duration = 3 })
+                end
+            end)
+        else
+            if tpSignal then tpSignal:Disconnect() end
+        end
+    end
+})
+
+-- Anti Kick (Hook perlindungan dasar dari kick game)
+local antiKickEnabled = false
+local oldNameCall
+oldNameCall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    if antiKickEnabled and self == LocalPlayer and method:lower() == "kick" then
+        warn("[KyZen Hub] Upaya Kick game berhasil dicegat/diabaikan!")
+        return
+    end
+    return oldNameCall(self, ...)
+end)
+
+PlayerTab:Toggle({
+    Title = "Anti Kick (On/Off)",
+    Default = false,
+    Callback = function(state)
+        antiKickEnabled = state
+        WindUI:Notify({ Title = "Anti-Kick", Content = state ? "Proteksi Kick Aktif" : "Proteksi Kick Dimatikan", Duration = 2 })
+    end
+})
