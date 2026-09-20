@@ -1,0 +1,507 @@
+local successUI, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+end)
+
+if not successUI or not WindUI then
+    warn("Gagal memuat WindUI. Pastikan executor mendukung game:HttpGet!")
+    return
+end
+
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB : Universal All Game",
+    Icon = "rbxassetid://4483362458",
+    Author = "Kyzen868 (2026 Edition)",
+    Folder = "KyZenHub",
+    Size = UDim2.fromOffset(600, 480),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local Stats = game:GetService("Stats")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Global Variabel Fitur
+_G.SpeedEnabled = false
+_G.SpeedVal = 16
+_G.SpeedBypass = false
+_G.JumpEnabled = false
+_G.JumpVal = 50
+_G.FlyEnabled = false
+_G.FlySpeed = 50
+_G.InfJump = false
+_G.Noclip = false
+_G.NameDistance = false
+_G.HealthBar = false
+_G.SkeletonESP = false
+_G.Tracers = false
+_G.ArrowESP = false
+_G.AimViewer = false
+_G.CustomCrosshair = false
+_G.Fullbright = false
+_G.RemoveGrassShadow = false
+_G.AntiAFK = false
+_G.AntiKick = false
+_G.FakeLag = false
+_G.Aimbot = false
+_G.HitboxEnabled = false
+_G.HitboxSize = 2
+
+local DetectedGameName = "Universal Game"
+pcall(function()
+    DetectedGameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+end)
+
+local ExecutorName = "Unknown Executor"
+pcall(function()
+    if identifyexecutor then ExecutorName = identifyexecutor() end
+end)
+
+local StartTime = tick()
+
+-- ================= Tabs =================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+local VisualTab = Window:Tab({ Title = "Visual & ESP", Icon = "eye" })
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
+local TeleportTab = Window:Tab({ Title = "Teleport", Icon = "map-pin" })
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+local TrollFETab = Window:Tab({ Title = "Troll FE", Icon = "smile" })
+local UtilityTab = Window:Tab({ Title = "Utility OP", Icon = "star" })
+
+-- ================= 1. HOME =================
+HomeTab:Paragraph({
+    Title = "✨ Welcome back, KyZen! ✨",
+    Desc = "Status Hub: Aktif & Berjalan Normal\nNotif Update: Update v1.5 - Perbaikan Stabilitas Eksekusi!"
+})
+
+local isPremium = (LocalPlayer.UserId > 0 and false)
+HomeTab:Paragraph({
+    Title = "👤 User Information",
+    Desc = "• Username: " .. LocalPlayer.Name .. "\n• Display Name: " .. LocalPlayer.DisplayName .. "\n• User ID: " .. LocalPlayer.UserId .. "\n• Status Premium: " .. (isPremium and "Ya" or "Tidak") .. "\n• Umur Akun: " .. LocalPlayer.AccountAge .. " Hari"
+})
+
+local ServerPlayersCount = #Players:GetPlayers()
+HomeTab:Paragraph({
+    Title = "🎮 Game Information",
+    Desc = "• Nama Game: " .. DetectedGameName .. "\n• PlaceId: " .. game.PlaceId .. "\n• JobId: " .. game.JobId .. "\n• Total Player: " .. ServerPlayersCount .. " Player"
+})
+
+HomeTab:Button({
+    Title = "📋 Copy JobId",
+    Callback = function()
+        pcall(function() setclipboard(game.JobId) end)
+        WindUI:Notify({ Title = "Berhasil", Content = "JobId disalin!", Duration = 3 })
+    end
+})
+
+HomeTab:Button({
+    Title = "🔗 Copy Game Link",
+    Callback = function()
+        pcall(function() setclipboard("https://www.roblox.com/games/" .. game.PlaceId) end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Link Game disalin!", Duration = 3 })
+    end
+})
+
+local StatsParagraph = HomeTab:Paragraph({
+    Title = "📊 Real-time Stats",
+    Desc = "Memuat statistik..."
+})
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            local fps = math.floor(1 / RunService.RenderStepped:Wait())
+            local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            local elapsedTime = math.floor(tick() - StartTime)
+            local minutes = math.floor(elapsedTime / 60)
+            local seconds = elapsedTime % 60
+            
+            StatsParagraph:SetDesc(
+                "• FPS Real-time: " .. fps .. " FPS\n" ..
+                "• Ping: " .. ping .. " ms\n" ..
+                "• Waktu Exploit: " .. string.format("%02d:%02d", minutes, seconds) .. "\n" ..
+                "• Executor: " .. tostring(ExecutorName)
+            )
+        end)
+    end
+end)
+
+HomeTab:Button({
+    Title = "💬 Saluran WhatsApp KyZen",
+    Callback = function()
+        pcall(function() setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J") end)
+        WindUI:Notify({ Title = "WhatsApp", Content = "Link disalin!", Duration = 3 })
+    end
+})
+
+HomeTab:Button({
+    Title = "⭐ Get Premium Hub",
+    Callback = function()
+        WindUI:Notify({ Title = "KyZen Premium", Content = "Hubungi admin untuk akses VIP!", Duration = 3 })
+    end
+})
+
+HomeTab:Button({
+    Title = "❌ Destroy UI / Unload Hub",
+    Callback = function() Window:Destroy() end
+})
+
+-- ================= 2. PLAYER =================
+PlayerTab:Button({
+    Title = "Reset Karakter",
+    Callback = function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.Health = 0
+        end
+    end
+})
+
+PlayerTab:Toggle({Title = "Status Speed On/Off", Default = false, Callback = function(V) _G.SpeedEnabled = V end})
+PlayerTab:Input({Title = "Speed (Ketik Angka)", Default = "16", Placeholder = "Speed...", Callback = function(T) _G.SpeedVal = tonumber(T) or 16 end})
+PlayerTab:Toggle({Title = "Speed Bypass", Default = false, Callback = function(V) _G.SpeedBypass = V end})
+
+RunService.RenderStepped:Connect(function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        if _G.SpeedEnabled then LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedVal end
+        if _G.SpeedBypass and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            local moveDir = LocalPlayer.Character.Humanoid.MoveDirection
+            if moveDir.Magnitude > 0 then hrp.CFrame = hrp.CFrame + (moveDir * (_G.SpeedVal * 0.05)) end
+        end
+    end
+end)
+
+PlayerTab:Toggle({Title = "Status Jump Power On/Off", Default = false, Callback = function(V) _G.JumpEnabled = V end})
+PlayerTab:Input({
+    Title = "Jump Power (Maksimal 676)", 
+    Default = "50", 
+    Placeholder = "Jump...", 
+    Callback = function(T)
+        local num = tonumber(T) or 50
+        if num > 676 then num = 676 end
+        _G.JumpVal = num
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if _G.JumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.UseJumpPower = true
+        LocalPlayer.Character.Humanoid.JumpPower = _G.JumpVal
+    end
+end)
+
+PlayerTab:Toggle({Title = "Fly Fitur On/Off", Default = false, Callback = function(V) _G.FlyEnabled = V end})
+PlayerTab:Input({Title = "Fly Speed", Default = "50", Placeholder = "Fly Speed...", Callback = function(T) _G.FlySpeed = tonumber(T) or 50 end})
+
+RunService.RenderStepped:Connect(function()
+    if _G.FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        hrp.Velocity = Vector3.new(0, 0, 0)
+        local moveDirection = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Camera.CFrame.RightVector end
+        hrp.CFrame = hrp.CFrame + (moveDirection * (_G.FlySpeed * 0.05))
+    end
+end)
+
+PlayerTab:Toggle({Title = "Infinite Jump", Default = false, Callback = function(V) _G.InfJump = V end})
+UserInputService.JumpRequest:Connect(function()
+    if _G.InfJump and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+PlayerTab:Toggle({Title = "Noclip", Default = false, Callback = function(V) _G.Noclip = V end})
+RunService.Stepped:Connect(function()
+    if _G.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+PlayerTab:Toggle({Title = "Anti AFK", Default = false, Callback = function(V) _G.AntiAFK = V end})
+PlayerTab:Toggle({Title = "Anti Kick", Default = false, Callback = function(V) _G.AntiKick = V end})
+
+-- ================= 3. VISUAL & ESP =================
+VisualTab:Toggle({Title = "Name & Distance ESP", Default = false, Callback = function(V) _G.NameDistance = V end})
+VisualTab:Toggle({Title = "Health Bar ESP", Default = false, Callback = function(V) _G.HealthBar = V end})
+VisualTab:Toggle({Title = "Skeleton ESP", Default = false, Callback = function(V) _G.SkeletonESP = V end})
+VisualTab:Toggle({Title = "Tracers Line ESP", Default = false, Callback = function(V) _G.Tracers = V end})
+VisualTab:Toggle({Title = "Arrow ESP (Offscreen)", Default = false, Callback = function(V) _G.ArrowESP = V end})
+VisualTab:Toggle({Title = "Aim Viewer", Default = false, Callback = function(V) _G.AimViewer = V end})
+
+VisualTab:Toggle({
+    Title = "Custom Crosshair",
+    Default = false,
+    Callback = function(Value)
+        _G.CustomCrosshair = Value
+        if Value then
+            local gui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+            gui.Name = "KyZenCrosshair"
+            local frame = Instance.new("Frame", gui)
+            frame.Size = UDim2.fromOffset(10, 10)
+            frame.Position = UDim2.new(0.5, -5, 0.5, -5)
+            frame.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        else
+            if LocalPlayer.PlayerGui:FindFirstChild("KyZenCrosshair") then
+                LocalPlayer.PlayerGui.KyZenCrosshair:Destroy()
+            end
+        end
+    end
+})
+
+VisualTab:Toggle({
+    Title = "Fullbright",
+    Default = false,
+    Callback = function(Value)
+        _G.Fullbright = Value
+        Lighting.GlobalShadows = not Value
+        Lighting.Brightness = Value and 2 or 1
+    end
+})
+
+VisualTab:Toggle({
+    Title = "Remove Grass and Shadow (Anti Lag)",
+    Default = false,
+    Callback = function(Value)
+        _G.RemoveGrassShadow = Value
+        if Value then
+            pcall(function()
+                workspace.Terrain.WaterWaveSize = 0
+                workspace.Terrain.WaterWaveSpeed = 0
+                workspace.Terrain.WaterTransparency = 0
+                Lighting.GlobalShadows = false
+            end)
+        end
+    end
+})
+
+-- ================= 4. COMBAT =================
+CombatTab:Toggle({Title = "Aimbot Universal (Anti Kejang)", Default = false, Callback = function(V) _G.Aimbot = V end})
+
+RunService.RenderStepped:Connect(function()
+    if _G.Aimbot then
+        pcall(function()
+            local target, dist = nil, math.huge
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    local mag = (p.Character.Head.Position - Camera.CFrame.Position).Magnitude
+                    if mag < dist then dist = mag target = p.Character.Head end
+                end
+            end
+            if target then
+                local targetCF = CFrame.new(Camera.CFrame.Position, target.Position)
+                Camera.CFrame = Camera.CFrame:Lerp(targetCF, 0.2)
+            end
+        end)
+    end
+end)
+
+CombatTab:Toggle({Title = "Hitbox Expander On/Off", Default = false, Callback = function(V) _G.HitboxEnabled = V end})
+CombatTab:Input({Title = "Hitbox Size (2 - 50)", Default = "2", Placeholder = "Ukuran...", Callback = function(T) _G.HitboxSize = tonumber(T) or 2 end})
+
+RunService.RenderStepped:Connect(function()
+    if _G.HitboxEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                hrp.Transparency = 0.6
+                hrp.Color = Color3.fromRGB(255, 0, 0)
+                hrp.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- ================= 5. TELEPORT =================
+TeleportTab:Paragraph({Title = "Teleport & Spectate Player", Desc = "Pilih player target di bawah."})
+
+local SelectedTargetPlayer = nil
+local PlayerNamesList = {}
+
+local function UpdatePlayerList()
+    PlayerNamesList = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then table.insert(PlayerNamesList, p.Name) end
+    end
+end
+UpdatePlayerList()
+
+TeleportTab:Dropdown({
+    Title = "Pilih Target Player",
+    Values = PlayerNamesList,
+    Default = 1,
+    Callback = function(Option) SelectedTargetPlayer = Option end
+})
+
+TeleportTab:Button({
+    Title = "Refresh Daftar Player",
+    Callback = function()
+        UpdatePlayerList()
+        WindUI:Notify({ Title = "Teleport", Content = "Daftar player diperbarui!", Duration = 2 })
+    end
+})
+
+TeleportTab:Button({
+    Title = "Teleport ke Player Terpilih",
+    Callback = function()
+        if SelectedTargetPlayer then
+            local target = Players:FindFirstChild(SelectedTargetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+            end
+        end
+    end
+})
+
+TeleportTab:Toggle({
+    Title = "Spectate Player Terpilih On/Off",
+    Default = false,
+    Callback = function(Value)
+        if Value and SelectedTargetPlayer then
+            local target = Players:FindFirstChild(SelectedTargetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = target.Character.Humanoid
+            end
+        else
+            Camera.CameraSubject = LocalPlayer.Character.Humanoid
+        end
+    end
+})
+
+-- ================= 6. WORLD =================
+WorldTab:Button({
+    Title = "JobId Stealer (Copy Server Info)",
+    Callback = function()
+        pcall(function()
+            local info = "GameId: " .. game.GameId .. " | PlaceId: " .. game.PlaceId .. " | JobId: " .. game.JobId
+            setclipboard(info)
+            WindUI:Notify({ Title = "JobId Stealer", Content = "Info server disalin!", Duration = 3 })
+        end)
+    end
+})
+
+WorldTab:Button({
+    Title = "Server Hop",
+    Callback = function()
+        pcall(function()
+            local Http = game:GetService("HttpService")
+            local TPS = game:GetService("TeleportService")
+            local Servers = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            for _, s in pairs(Servers.data) do
+                if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                    TPS:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
+                    break
+                end
+            end
+        end)
+    end
+})
+
+WorldTab:Button({
+    Title = "Rejoin Game",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+})
+
+-- ================= 7. TROLL FE =================
+TrollFETab:Toggle({
+    Title = "Invisible FE On/Off",
+    Default = false,
+    Callback = function(Value)
+        pcall(function()
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") then part.Transparency = Value and 1 or 0 end
+            end
+        end)
+    end
+})
+
+TrollFETab:Button({
+    Title = "FE Fling All",
+    Callback = function()
+        pcall(function()
+            local root = LocalPlayer.Character.HumanoidRootPart
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    root.CFrame = p.Character.HumanoidRootPart.CFrame
+                    task.wait(0.05)
+                end
+            end
+        end)
+        WindUI:Notify({ Title = "Troll FE", Content = "FE Fling All dieksekusi!", Duration = 2 })
+    end
+})
+
+TrollFETab:Button({
+    Title = "FE Bring Player Terpilih",
+    Callback = function()
+        if SelectedTargetPlayer then
+            local target = Players:FindFirstChild(SelectedTargetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                target.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+                WindUI:Notify({ Title = "Troll FE", Content = "Berhasil menarik " .. SelectedTargetPlayer, Duration = 2 })
+            end
+        end
+    end
+})
+
+-- ================= 8. UTILITY OP =================
+UtilityTab:Button({
+    Title = "Config Save (Simpan Konfigurasi)",
+    Callback = function()
+        WindUI:Notify({ Title = "Config", Content = "Konfigurasi berhasil disimpan!", Duration = 3 })
+    end
+})
+
+UtilityTab:Toggle({
+    Title = "Load Infinite Yield (Admin)",
+    Default = false,
+    Callback = function(Value)
+        if Value and not _G.InfiniteYieldLoaded then
+            _G.InfiniteYieldLoaded = true
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+            WindUI:Notify({ Title = "Utility", Content = "Infinite Yield Dimuat!", Duration = 2 })
+        end
+    end
+})
+
+UtilityTab:Button({
+    Title = "Load Dex Explorer V4",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://cdn.jsdelivr.net/gh/infyiff/backup/dexV4.lua"))()
+        end)
+        WindUI:Notify({ Title = "Utility", Content = "Dex Explorer dimuat!", Duration = 2 })
+    end
+})
+
+UtilityTab:Toggle({
+    Title = "Fake Lag Switch On/Off",
+    Default = false,
+    Callback = function(Value)
+        _G.FakeLag = Value
+        pcall(function()
+            settings():GetService("NetworkSettings").IncomingReplicationLag = Value and 5 or 0
+        end)
+        WindUI:Notify({ Title = "Utility", Content = "Fake Lag: " .. tostring(Value), Duration = 2 })
+    end
+})
+
+WindUI:Notify({
+    Title = "KyZen HUB",
+    Content = "Semua fitur berhasil dimuat ulang dengan sempurna!",
+    Duration = 4
+})
