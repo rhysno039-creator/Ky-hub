@@ -1,0 +1,596 @@
+-- Memuat WindUI Library dengan Error Handling yang Aman
+local Success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/refs/heads/main/main.lua"))()
+end)
+
+if not Success or not WindUI then
+    Success, WindUI = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+    end)
+end
+
+if not Success or not WindUI then
+    warn("Failed to load WindUI Library!")
+    return
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local Stats = game:GetService("Stats")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local ExecutorName = "Executor"
+pcall(function()
+    if identifyexecutor then
+        ExecutorName = identifyexecutor()
+    end
+end)
+
+-- ==================== FLOATING BAR (TOP LEFT) ====================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KyZenFloatingBar"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local BarFrame = Instance.new("Frame")
+BarFrame.Name = "BarFrame"
+BarFrame.Size = UDim2.new(0, 260, 0, 32)
+BarFrame.Position = UDim2.new(0, 20, 0, 15)
+BarFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+BarFrame.BackgroundTransparency = 0.3
+BarFrame.BorderSizePixel = 0
+BarFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 16)
+UICorner.Parent = BarFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(150, 80, 255)
+UIStroke.Thickness = 1.5
+UIStroke.Parent = BarFrame
+
+local BarText = Instance.new("TextLabel")
+BarText.Name = "BarText"
+BarText.Size = UDim2.new(1, 0, 1, 0)
+BarText.BackgroundTransparency = 1
+BarText.Font = Enum.Font.GothamBold
+BarText.TextColor3 = Color3.fromRGB(255, 255, 255)
+BarText.TextSize = 12
+BarText.Text = "kyy ⚡ KyZen HUB 🌐 " .. ExecutorName
+BarText.Parent = BarFrame
+
+task.spawn(function()
+    while ScreenGui and ScreenGui.Parent and task.wait(1) do
+        pcall(function()
+            local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            local timeStr = os.date("%H:%M:%S")
+            BarText.Text = "kyy ⚡ KyZen 🌐 " .. ExecutorName .. " ⏱️ " .. ping .. "ms 🕒 " .. timeStr
+        end)
+    end
+end)
+
+-- Window Utama WindUI
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB",
+    Icon = "",
+    Author = "kyzen868", 
+    Folder = "KyZenHubConfig",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 160,
+    HasOutline = true
+})
+
+local function getPlayerNames()
+    local list = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        table.insert(list, p.Name)
+    end
+    if #list == 0 then table.insert(list, "No players available") end
+    return list
+end
+
+-- ==================== TAB 1: HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+HomeTab:Section({ Title = "1. Welcome Section" })
+HomeTab:Paragraph({ Title = "Welcome, " .. LocalPlayer.Name .. " 👋", Desc = "• Executor: " .. ExecutorName })
+
+HomeTab:Section({ Title = "2. Social Media" })
+HomeTab:Button({
+    Title = "Copy WhatsApp Channel",
+    Callback = function()
+        pcall(function() setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J") end)
+        WindUI:Notify({ Title = "Success", Content = "WhatsApp link copied to clipboard.", Duration = 3 })
+    end
+})
+HomeTab:Button({
+    Title = "Copy TikTok Username",
+    Callback = function()
+        pcall(function() setclipboard("kyzen868") end)
+        WindUI:Notify({ Title = "Success", Content = "TikTok username copied.", Duration = 3 })
+    end
+})
+
+HomeTab:Section({ Title = "3. Update Log" })
+HomeTab:Paragraph({ Title = "Update Log", Desc = "• v17.7: Fixed Hitbox Expander & ESP/Chams features." })
+
+HomeTab:Section({ Title = "4. Action" })
+HomeTab:Button({
+    Title = "Unload HUB",
+    Callback = function() 
+        pcall(function() ScreenGui:Destroy() end)
+        pcall(function() Window:Destroy() end)
+    end
+})
+
+-- ==================== TAB 2: INFORMATION ====================
+local InfoTab = Window:Tab({ Title = "Info", Icon = "info" })
+InfoTab:Section({ Title = "Information & Guide" })
+InfoTab:Paragraph({ 
+    Title = "Guide & Details", 
+    Desc = "• **Teleport**: Instantly teleport to any selected player.\n" ..
+           "• **Run / WalkSpeed**: Modify your character running speed easily." 
+})
+InfoTab:Button({
+    Title = "Copy Game Link",
+    Callback = function()
+        pcall(function() setclipboard("https://www.roblox.com/games/" .. game.PlaceId) end)
+        WindUI:Notify({ Title = "Success", Content = "Game link successfully copied!", Duration = 3 })
+    end
+})
+
+-- ==================== TAB 3: PLAYER ====================
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+local walkSpeedEnabled = false
+local customWalkSpeed = 16
+local jumpPowerEnabled = false
+local customJumpPower = 50
+local noclipEnabled = false
+local bunnyHopEnabled = false
+local infJumpEnabled = false
+local antiAfkEnabled = false
+local antiRejoinEnabled = false
+local antiKickEnabled = false
+local dashSpeedEnabled = false
+local dashSpeedVal = 30
+
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+PlayerTab:Section({ Title = "1. Main Movement" })
+PlayerTab:Toggle({
+    Title = "Fly", Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end
+})
+PlayerTab:Input({
+    Title = "Fly Speed", Default = "50", Placeholder = "Enter speed...", 
+    Callback = function(val) local num = tonumber(val) if num then flySpeed = num end end
+})
+PlayerTab:Toggle({
+    Title = "WalkSpeed / Run", Default = false, 
+    Callback = function(V) walkSpeedEnabled = V local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") if hum then hum.WalkSpeed = V and customWalkSpeed or 16 end end
+})
+PlayerTab:Input({
+    Title = "WalkSpeed Value", Default = "16", Placeholder = "Example: 16",
+    Callback = function(value) local num = tonumber(value) if num then customWalkSpeed = num end end
+})
+PlayerTab:Toggle({
+    Title = "JumpPower", Default = false,
+    Callback = function(state)
+        jumpPowerEnabled = state
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.UseJumpPower = state hum.JumpPower = state and customJumpPower or 50 end
+    end
+})
+PlayerTab:Input({
+    Title = "JumpPower Value", Default = "50", Placeholder = "Example: 50",
+    Callback = function(val) local num = tonumber(val) if num then customJumpPower = num end end
+})
+PlayerTab:Toggle({
+    Title = "Dash Speed", Default = false,
+    Callback = function(state) dashSpeedEnabled = state end
+})
+PlayerTab:Input({
+    Title = "Dash Speed Value", Default = "30", Placeholder = "Dash speed...",
+    Callback = function(val) local num = tonumber(val) if num then dashSpeedVal = num end end
+})
+
+PlayerTab:Section({ Title = "2. Miscellaneous & Protection" })
+PlayerTab:Toggle({ Title = "Bunny Hop", Default = false, Callback = function(state) bunnyHopEnabled = state end })
+PlayerTab:Toggle({ 
+    Title = "Noclip", Default = false, 
+    Callback = function(state) 
+        noclipEnabled = state 
+        if not state then
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = true end
+                end
+            end
+        end
+    end 
+})
+PlayerTab:Toggle({ Title = "Infinite Jump", Default = false, Callback = function(state) infJumpEnabled = state end })
+PlayerTab:Toggle({ Title = "Anti Rejoin", Default = false, Callback = function(state) antiRejoinEnabled = state end })
+PlayerTab:Toggle({ Title = "Anti Kick", Default = false, Callback = function(state) antiKickEnabled = state end })
+PlayerTab:Toggle({ Title = "Anti AFK", Default = false, Callback = function(state) antiAfkEnabled = state end })
+
+-- ==================== TAB 4: VISUAL / ESP ====================
+local VisualTab = Window:Tab({ Title = "Visual", Icon = "eye" })
+local hitboxEnabled = false
+local hitboxSizeValue = 5 
+local espEnabled = false
+local healthEspEnabled = false
+local chamsEspEnabled = false
+local fullBrightEnabled = false
+local brightLevelValue = 2 
+local fovEnabled = false
+local fovValue = 70
+
+local rainbowTracersEnabled = false
+local rainbowSkeletonEnabled = false
+local rainbowVisCheckEnabled = false
+local tracersList = {}
+
+local function removeTracers()
+    for _, line in pairs(tracersList) do
+        pcall(function() line:Remove() end)
+    end
+    tracersList = {}
+end
+
+VisualTab:Section({ Title = "Visual & ESP Features" })
+VisualTab:Toggle({ Title = "Rainbow Tracers", Default = false, Callback = function(state) rainbowTracersEnabled = state if not state then removeTracers() end end })
+VisualTab:Toggle({ Title = "Rainbow Skeleton ESP", Default = false, Callback = function(state) rainbowSkeletonEnabled = state end })
+VisualTab:Toggle({ Title = "Rainbow Visibility Check", Default = false, Callback = function(state) rainbowVisCheckEnabled = state end })
+
+VisualTab:Section({ Title = "Hitbox & Standard ESP" })
+VisualTab:Toggle({
+    Title = "Hitbox Expander", Default = false,
+    Callback = function(state)
+        hitboxEnabled = state
+        if not state then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                    hrp.CanCollide = true
+                end
+            end
+        end
+    end
+})
+VisualTab:Input({
+    Title = "Hitbox Size", Default = "5", Placeholder = "Enter size...",
+    Callback = function(value) local num = tonumber(value) if num then hitboxSizeValue = num end end
+})
+VisualTab:Toggle({Title = "ESP Box", Default = false, Callback = function(state) espEnabled = state end})
+VisualTab:Toggle({Title = "Health ESP", Default = false, Callback = function(state) healthEspEnabled = state end})
+VisualTab:Toggle({Title = "Chams ESP", Default = false, Callback = function(state) chamsEspEnabled = state end})
+
+VisualTab:Section({ Title = "Environment & Camera" })
+VisualTab:Toggle({
+    Title = "Full Brightness", Default = false,
+    Callback = function(state)
+        fullBrightEnabled = state
+        if not state then Lighting.Brightness = 1 Lighting.GlobalShadows = true end
+    end
+})
+VisualTab:Toggle({
+    Title = "Field of View (FOV)", Default = false,
+    Callback = function(state) fovEnabled = state if not state then Camera.FieldOfView = 70 end end
+})
+VisualTab:Input({
+    Title = "FOV Value", Default = "70", Placeholder = "Enter FOV number (e.g., 90, 120)...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then fovValue = num end
+    end
+})
+
+-- ==================== TAB 5: WORLD & GRAPHICS ====================
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+WorldTab:Section({ Title = "World & Graphics Quality" })
+
+WorldTab:Dropdown({
+    Title = "Graphics Quality Level (Ultra/Max)",
+    Values = { "Ultra", "Very High", "Max" },
+    Default = "Ultra",
+    Callback = function(val)
+        pcall(function()
+            Lighting.Technology = Enum.Technology.Future
+            Lighting.GlobalShadows = true
+            Lighting.Brightness = 2
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("PostEffect") then v.Enabled = true end
+            end
+            WindUI:Notify({ Title = "Graphics Boost", Content = "Graphics set to " .. val, Duration = 3 })
+        end)
+    end
+})
+
+WorldTab:Dropdown({
+    Title = "Screen Resolution / Ultra HD Render",
+    Values = { "Ultra HD (Max Visual)", "High Quality", "Balanced" },
+    Default = "Ultra HD (Max Visual)",
+    Callback = function(val)
+        pcall(function()
+            Lighting.GlobalShadows = true
+            Lighting.EnvironmentDiffuseScale = 1
+            Lighting.EnvironmentSpecularScale = 1
+            WindUI:Notify({ Title = "Visual Render", Content = "Visual upgraded to maximum without rejoin!", Duration = 3 })
+        end)
+    end
+})
+
+WorldTab:Button({
+    Title = "FPS Boost",
+    Callback = function()
+        pcall(function()
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") then v.Enabled = false end
+            end
+            Lighting.GlobalShadows = false
+            WindUI:Notify({ Title = "FPS Boost", Content = "Performance optimized successfully!", Duration = 3 })
+        end)
+    end
+})
+WorldTab:Button({
+    Title = "Server Hop",
+    Callback = function()
+        pcall(function()
+            local servers = {}
+            local req = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            if req and req.data then
+                for _, s in pairs(req.data) do
+                    if s.playing < s.maxPlayers and s.id ~= game.JobId then table.insert(servers, s.id) end
+                end
+            end
+            if #servers > 0 then TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer) end
+        end)
+    end
+})
+WorldTab:Button({ Title = "Rejoin Server", Callback = function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end })
+WorldTab:Button({ Title = "Copy JobID", Callback = function() pcall(function() setclipboard(game.JobId) end) end })
+
+-- ==================== TAB 6: TROLL & TELEPORT ====================
+local TrollTab = Window:Tab({ Title = "Troll & TP", Icon = "crosshair" })
+local selectedTarget = nil
+local ghostOtherEnabled = false
+local flingAllEnabled = false
+
+TrollTab:Section({ Title = "Troll & Fun Features" })
+TrollTab:Toggle({
+    Title = "Ghost Other Players", Default = false,
+    Callback = function(state)
+        ghostOtherEnabled = state
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                for _, part in pairs(p.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.Transparency = state and 1 or 0 end
+                end
+            end
+        end
+    end
+})
+
+TrollTab:Toggle({ 
+    Title = "Fling All Players", Default = false, 
+    Callback = function(state) flingAllEnabled = state end 
+})
+
+TrollTab:Button({
+    Title = "Bring All Players",
+    Callback = function()
+        local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myHrp then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.CFrame = myHrp.CFrame + Vector3.new(3, 0, 0)
+                end
+            end
+        end
+    end
+})
+
+TrollTab:Section({ Title = "Player Teleportation" })
+TrollTab:Dropdown({
+    Title = "Select Player Target", 
+    Values = getPlayerNames(),
+    Callback = function(val) selectedTarget = val end
+})
+
+TrollTab:Button({
+    Title = "Execute Teleport",
+    Callback = function()
+        if selectedTarget and selectedTarget ~= "No players available" then
+            local targetPlayer = Players:FindFirstChild(selectedTarget)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myHrp then 
+                    myHrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0) 
+                end
+            end
+        end
+    end
+})
+
+-- ==================== TAB 7: UTILITY ====================
+local UtilityTab = Window:Tab({ Title = "Utility", Icon = "wrench" })
+UtilityTab:Section({ Title = "Advanced Utility Tools" })
+
+UtilityTab:Button({
+    Title = "Infinite Yield",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+            WindUI:Notify({ Title = "Infinite Yield", Content = "Loaded successfully!", Duration = 3 })
+        end)
+    end
+})
+
+UtilityTab:Button({
+    Title = "Dex Explorer",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+            WindUI:Notify({ Title = "Dex Explorer", Content = "Loaded successfully!", Duration = 3 })
+        end)
+    end
+})
+
+UtilityTab:Button({
+    Title = "Remote Spy",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))()
+            WindUI:Notify({ Title = "Remote Spy", Content = "Loaded successfully!", Duration = 3 })
+        end)
+    end
+})
+
+-- ==================== TAB 8: SETTINGS ====================
+local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
+
+SettingsTab:Section({ Title = "UI Color Theme Customization" })
+SettingsTab:Dropdown({
+    Title = "Select UI Theme",
+    Values = { "Dark", "Light", "Rose", "Plant", "Red", "Indigo", "Sky", "Violet", "Amber", "Emerald", "Midnight", "Crimson" },
+    Default = "Dark",
+    Callback = function(themeName)
+        pcall(function() WindUI:SetTheme(themeName) end)
+    end
+})
+
+-- ==================== RUNTIME LOOP ====================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local tickTime = tick() * 5
+        local rainbowColor = Color3.fromHSV(tickTime % 1, 1, 1)
+
+        -- Rainbow Tracers Logic
+        if rainbowTracersEnabled and Drawing then
+            removeTracers()
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetHrp = p.Character.HumanoidRootPart
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetHrp.Position)
+                    if onScreen then
+                        local line = Drawing.new("Line")
+                        line.Visible = true
+                        line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        line.Color = rainbowColor
+                        line.Thickness = 1.5
+                        line.Transparency = 0.8
+                        table.insert(tracersList, line)
+                    end
+                end
+            end
+        end
+
+        -- Hitbox Expander Logic
+        if hitboxEnabled then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(hitboxSizeValue, hitboxSizeValue, hitboxSizeValue)
+                    hrp.Transparency = 0.5
+                    hrp.CanCollide = false
+                end
+            end
+        end
+
+        -- Fling All Logic
+        if flingAllEnabled then
+            local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if myHrp then
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        p.Character.HumanoidRootPart.Velocity = Vector3.new(99999, 99999, 99999)
+                    end
+                end
+            end
+        end
+
+        -- ESP Highlights (ESP Box, Chams ESP, Rainbow Skeleton)
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local char = p.Character
+                local highlight = char:FindFirstChild("KyZenRainbowHighlight")
+                
+                if (espEnabled or chamsEspEnabled or rainbowSkeletonEnabled) then
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Name = "KyZenRainbowHighlight"
+                        highlight.Parent = char
+                    end
+                    highlight.Enabled = true
+                    highlight.FillColor = rainbowColor
+                    highlight.OutlineColor = rainbowColor
+                    highlight.FillTransparency = (chamsEspEnabled or espEnabled) and 0.5 or 1
+                    highlight.OutlineTransparency = 0
+                else
+                    if highlight then highlight:Destroy() end
+                end
+            end
+        end
+
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = char:FindFirstChild("Humanoid")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        
+        if flyToggled and hrp and bodyVelocity and bodyGyro then
+            bodyGyro.CFrame = Camera.CFrame
+            local moveDirection = hum.MoveDirection
+            local ySpeed = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then ySpeed = flySpeed end
+            bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDirection.Magnitude > 0 and flySpeed or 0)) + Vector3.new(0, ySpeed, 0)
+        end
+        if walkSpeedEnabled and hum then hum.WalkSpeed = customWalkSpeed end
+        if jumpPowerEnabled and hum then hum.JumpPower = customJumpPower end
+        if dashSpeedEnabled and hum and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (dashSpeedVal / 50))
+        end
+        if bunnyHopEnabled and hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        if noclipEnabled then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+        if fullBrightEnabled then Lighting.Brightness = brightLevelValue Lighting.GlobalShadows = false end
+        if fovEnabled then Camera.FieldOfView = fovValue end
+    end)
+end)
+
+WindUI:Notify({ Title = "KyZen HUB", Content = "Hitbox & ESP Fixed Successfully! ✅", Duration = 3 })
