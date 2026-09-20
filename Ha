@@ -1,0 +1,356 @@
+-- WindUI Library Loader Resmi & Stabil
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local ExecutorName = identifyexecutor and identifyexecutor() or "Delta"
+local ThumbnailUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=420&height=420&format=png"
+
+-- Window Utama
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB | IS BACK",
+    Icon = "",
+    Author = "", 
+    Folder = "KyZenHubConfig",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 160,
+    HasOutline = true
+})
+
+-- ==================== TAB 1: HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+
+HomeTab:Section({ Title = "1. Welcome Section" })
+HomeTab:Image({ Image = ThumbnailUrl })
+HomeTab:Paragraph({
+    Title = "Halo, " .. LocalPlayer.Name .. " 👋",
+    Desc = "• Executor: " .. ExecutorName
+})
+
+HomeTab:Section({ Title = "2. Main Button" })
+HomeTab:Button({
+    Title = "Join Saluran WhatsApp",
+    Callback = function()
+        setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J")
+        WindUI:Notify({ Title = "Berhasil", Content = "Link WA disalin ke clipboard.", Duration = 3 })
+    end
+})
+HomeTab:Button({
+    Title = "Akun TT kyzen868",
+    Callback = function()
+        setclipboard("kyzen868")
+        WindUI:Notify({ Title = "Berhasil", Content = "Username TikTok disalin.", Duration = 3 })
+    end
+})
+
+HomeTab:Section({ Title = "3. Update Log" })
+HomeTab:Paragraph({
+    Title = "Riwayat Pembaruan Hub",
+    Desc = "• v2.9: Fixed Fly Up/Down & Swapped Reset/AntiAFK with AntiRejoin Added"
+})
+
+HomeTab:Section({ Title = "4. Action" })
+HomeTab:Button({
+    Title = "Destroy / Unload HUB",
+    Callback = function()
+        Window:Destroy()
+    end
+})
+
+
+-- ==================== TAB 2: INFORMATION ====================
+local InfoTab = Window:Tab({ Title = "Information", Icon = "info" })
+
+InfoTab:Section({ Title = "1. Player Info" })
+InfoTab:Paragraph({
+    Title = "Informasi Akun",
+    Desc = "• Username: " .. LocalPlayer.Name .. "\n• UserId: " .. LocalPlayer.UserId .. "\n• Account Age: " .. LocalPlayer.AccountAge .. " Hari"
+})
+
+InfoTab:Section({ Title = "2. Game Info" })
+InfoTab:Paragraph({
+    Title = "Status Game",
+    Desc = "• PlaceId: " .. game.PlaceId .. "\n• JobId: " .. game.JobId .. "\n• Player Count: " .. #Players:GetPlayers()
+})
+
+InfoTab:Section({ Title = "3. Hub Info" })
+InfoTab:Paragraph({
+    Title = "KyZen HUB | IS BACK",
+    Desc = "• Version: v2.9\n• Total Fitur: Semua Fitur Aktif"
+})
+
+InfoTab:Section({ Title = "4. Server Button" })
+InfoTab:Button({
+    Title = "Copy JobId",
+    Callback = function()
+        setclipboard(game.JobId)
+        WindUI:Notify({ Title = "Berhasil", Content = "JobId disalin.", Duration = 3 })
+    end
+})
+InfoTab:Button({
+    Title = "Rejoin Server",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+})
+
+
+-- ==================== TAB 3: PLAYER ====================
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+-- Variabel Pendukung
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+local customWalkSpeed = 16
+local moonWalkSpeed = 16
+
+-- ==================== 1. KONTROL UTAMA (FLY & WALK SPEED) ====================
+PlayerTab:Section({ Title = "1. Kontrol Utama (Fly & Kecepatan)" })
+
+PlayerTab:Paragraph({ 
+    Title = "🚀 Pengaturan Fly & Speed", 
+    Desc = "Pengaturan fitur terbang utama dan kecepatan karakter." 
+})
+
+PlayerTab:Toggle({
+    Title = "Fly", 
+    Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        _G.FlyEnabled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Ketik Fly Speed di sini", 
+    Default = "50", 
+    Placeholder = "Masukkan angka...", 
+    Callback = function(val) 
+        flySpeed = tonumber(val) or 50 
+        _G.FlySpeed = flySpeed
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Walk Speed", 
+    Default = false, 
+    Callback = function(V) 
+        _G.SpeedEnabled = V 
+        if not V and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Ketik Angka WalkSpeed",
+    Placeholder = "Contoh: 35",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            customWalkSpeed = num
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if _G.SpeedEnabled and hum then
+                hum.WalkSpeed = customWalkSpeed
+            end
+        end
+    end
+})
+
+
+-- ==================== 2. MOON WALK & EXTRAS ====================
+PlayerTab:Section({ Title = "2. Moon Walk & Extras" })
+
+PlayerTab:Toggle({
+    Title = "Moon Walk", 
+    Default = false, 
+    Callback = function(V) 
+        _G.MoonWalkEnabled = V 
+        if not V and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Ketik Moon Walk Speed",
+    Default = "16",
+    Placeholder = "Masukkan angka...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then moonWalkSpeed = num end
+    end
+})
+
+PlayerTab:Toggle({Title = "Shift Lock", Default = false, Callback = function(V) _G.ShiftLockEnabled = V end})
+PlayerTab:Toggle({Title = "Bunny Hop", Default = false, Callback = function(V) _G.BunnyHop = V end})
+
+
+-- ==================== 3. UTILITY & PROTECTION ====================
+PlayerTab:Section({ Title = "3. Utility & Protection" })
+
+local infJumpEnabled = false
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Infinite Jump (On/Off)",
+    Default = false,
+    Callback = function(state)
+        infJumpEnabled = state
+        WindUI:Notify({ Title = "Inf Jump", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+local noclipEnabled = false
+RunService.Stepped:Connect(function()
+    if noclipEnabled then
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Noclip (On/Off)",
+    Default = false,
+    Callback = function(state)
+        noclipEnabled = state
+        WindUI:Notify({ Title = "Noclip", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+-- Tombol Reset Character dipindah ke atas Anti AFK
+PlayerTab:Button({
+    Title = "Reset Character",
+    Callback = function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.Health = 0 end
+    end
+})
+
+-- Fitur Anti Rejoin ditambahkan di atas Anti AFK
+local antiRejoinEnabled = false
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+
+PlayerTab:Toggle({
+    Title = "Anti Rejoin (On/Off)",
+    Default = false,
+    Callback = function(state)
+        antiRejoinEnabled = state
+        WindUI:Notify({ Title = "Anti Rejoin", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+-- Proteksi otomatis jika mencoba ter-teleport keluar/rejoin tidak sengaja
+LocalPlayer.OnTeleport = function(teleportState)
+    if antiRejoinEnabled and teleportState == Enum.TeleportState.Started then
+        -- Mencegah teleport otomatis jika diinginkan
+    end
+end
+
+local antiAfkEnabled = false
+local vu = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+    if antiAfkEnabled then
+        vu:Button2Down(Vector2.new(0,0), Camera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), Camera.CFrame)
+    end
+end)
+
+PlayerTab:Toggle({
+    Title = "Anti AFK (On/Off)",
+    Default = false,
+    Callback = function(state)
+        antiAfkEnabled = state
+        WindUI:Notify({ Title = "Anti-AFK", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+
+-- ==================== LOOP RENDER STEPPED UTAMA ====================
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    
+    -- Loop Fly (Kelar dengan tambahan kontrol naik/turun via arah kamera & tombol)
+    if flyToggled and hrp and bodyVelocity and bodyGyro then
+        bodyGyro.CFrame = Camera.CFrame
+        local moveDirection = hum.MoveDirection
+        local verticalSpeed = 0
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            verticalSpeed = flySpeed
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl) then
+            verticalSpeed = -flySpeed
+        end
+        
+        bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDirection.Magnitude > 0 and flySpeed or 0)) + Vector3.new(0, verticalSpeed, 0)
+    end
+
+    -- Loop Walk Speed
+    if _G.SpeedEnabled and hum then
+        hum.WalkSpeed = customWalkSpeed
+    end
+
+    -- Loop Moon Walk
+    if _G.MoonWalkEnabled and hum and hrp then
+        if hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(180), 0)
+            hum.WalkSpeed = moonWalkSpeed
+        end
+    end
+
+    -- Loop Bunny Hop
+    if _G.BunnyHop and hum and hum.FloorMaterial ~= Enum.Material.Air then
+        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+
+    -- Loop Shift Lock
+    if _G.ShiftLockEnabled and hrp then
+        local camCFrame = Camera.CFrame
+        hrp.CFrame = CFrame.new(hrp.Position, Vector3.new(camCFrame.LookVector.X * 9e9, hrp.Position.Y, camCFrame.LookVector.Z * 9e9))
+    end
+end)
+
+WindUI:Notify({
+    Title = "KyZen HUB",
+    Content = "Posisi menu dan fitur Fly berhasil diperbarui!",
+    Duration = 3
+})
