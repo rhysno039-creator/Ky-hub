@@ -1,0 +1,257 @@
+-- WindUI Library Loader (Latest Version)
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+-- Membuat Jendela Utama (Window)
+local Window = WindUI:CreateWindow({
+    Title = "Voidware | Universal Hub",
+    Icon = "rbxassetid://6034287507",
+    Author = "Delta Executor User",
+    Folder = "VoidwareConfig",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 160,
+    HasOutline = true
+})
+
+-- ==================== TAB 1 : HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+
+HomeTab:Section({ Title = "Selamat Datang" })
+
+HomeTab:Paragraph({
+    Title = "Voidware Universal Hub",
+    Desc = "Script ini menggunakan WindUI terbaru yang sangat ringan dan mulus digunakan pada Delta Executor (Android/iOS/PC)."
+})
+
+HomeTab:Button({
+    Title = "Salin Link Discord / Komunitas",
+    Callback = function()
+        setclipboard("https://github.com/VapeVoidware")
+        WindUI:Notify({ Title = "Berhasil", Content = "Link berhasil disalin ke clipboard!", Duration = 3 })
+    end
+})
+
+-- ==================== TAB 2 : INFORMASI ====================
+local InfoTab = Window:Tab({ Title = "Informasi", Icon = "info" })
+
+InfoTab:Section({ Title = "Status & Detail Script" })
+
+InfoTab:Paragraph({
+    Title = "Informasi Executor",
+    Desc = "Executor Aktif: Delta\nGame: Universal (All Map)\nStatus Script: Aman & Berjalan Normal"
+})
+
+InfoTab:Button({
+    Title = "Cek FPS & Ping",
+    Callback = function()
+        local stats = game:GetService("Stats")
+        local fps = math.floor(1 / game:GetService("RunService").RenderStepped:Wait())
+        local ping = math.floor(stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+        WindUI:Notify({ Title = "Status Performa", Content = "FPS: " .. fps .. " | Ping: " .. ping .. " ms", Duration = 4 })
+    end
+})
+
+-- ==================== TAB 3 : PLAYER ====================
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+PlayerTab:Section({ Title = "Modifikasi Karakter" })
+
+PlayerTab:Slider({
+    Title = "WalkSpeed",
+    Description = "Mengubah kecepatan jalan karakter",
+    Value = { Min = 16, Max = 250, Default = 16 },
+    Callback = function(value)
+        pcall(function()
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+        end)
+    end
+})
+
+PlayerTab:Slider({
+    Title = "JumpPower",
+    Description = "Mengubah tinggi lompatan",
+    Value = { Min = 50, Max = 300, Default = 50 },
+    Callback = function(value)
+        pcall(function()
+            game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = value
+        end)
+    end
+})
+
+PlayerTab:Button({
+    Title = "Reset Karakter (Kill Self)",
+    Callback = function()
+        pcall(function()
+            game.Players.LocalPlayer.Character.Humanoid.Health = 0
+        end)
+    end
+})
+
+-- ==================== TAB 4 : VISUAL ====================
+local VisualTab = Window:Tab({ Title = "Visual", Icon = "eye" })
+
+VisualTab:Section({ Title = "Pengaturan Kamera & Tampilan" })
+
+VisualTab:Slider({
+    Title = "Field of View (FOV)",
+    Description = "Mengatur luas pandangan kamera",
+    Value = { Min = 70, Max = 120, Default = 70 },
+    Callback = function(value)
+        workspace.CurrentCamera.FieldOfView = value
+    end
+})
+
+VisualTab:Toggle({
+    Title = "Fullbright (Anti-Gelap)",
+    Description = "Membuat seluruh map menjadi terang benderang",
+    Default = false,
+    Callback = function(state)
+        if state then
+            game:GetService("Lighting").Brightness = 2
+            game:GetService("Lighting").ClockTime = 14
+            game:GetService("Lighting").GlobalShadows = false
+        else
+            game:GetService("Lighting").GlobalShadows = true
+        end
+    end
+})
+
+-- ==================== TAB 5 : COMBAT ====================
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "sword" })
+
+CombatTab:Section({ Title = "Fitur Pertarungan Universal" })
+
+CombatTab:Toggle({
+    Title = "Hitbox Expander (Dummy)",
+    Description = "Memperbesar ukuran hitbox pemain lain",
+    Default = false,
+    Callback = function(state)
+        _G.Hitbox = state
+        task.spawn(function()
+            while _G.Hitbox do
+                task.wait(1)
+                for _, v in pairs(game.Players:GetPlayers()) do
+                    if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        v.Character.HumanoidRootPart.Size = Vector3.new(5, 5, 5)
+                        v.Character.HumanoidRootPart.Transparency = 0.7
+                        v.Character.HumanoidRootPart.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end
+})
+
+-- ==================== TAB 6 : MOVEMENT ====================
+local MovementTab = Window:Tab({ Title = "Movement", Icon = "move" })
+
+MovementTab:Section({ Title = "Gerakan Tambahan" })
+
+MovementTab:Toggle({
+    Title = "Infinite Jump",
+    Description = "Bisa melompat berkali-kali di udara",
+    Default = false,
+    Callback = function(state)
+        _G.InfJump = state
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if _G.InfJump then
+                pcall(function()
+                    game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end)
+            end
+        end)
+    end
+})
+
+-- ==================== TAB 7 : WORLD / TELEPORT ====================
+local WorldTab = Window:Tab({ Title = "World / Teleport", Icon = "globe" })
+
+WorldTab:Section({ Title = "Teleportasi Pemain" })
+
+local selectedPlayer = ""
+WorldTab:Input({
+    Title = "Nama Target",
+    Placeholder = "Ketik sebagian nama player...",
+    Callback = function(text)
+        selectedPlayer = text
+    end
+})
+
+WorldTab:Button({
+    Title = "Teleport ke Player",
+    Callback = function()
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if string.sub(string.lower(v.Name), 1, string.len(selectedPlayer)) == string.lower(selectedPlayer) then
+                if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+                    WindUI:Notify({ Title = "Berhasil", Content = "Teleport ke " .. v.Name, Duration = 3 })
+                end
+            end
+        end
+    end
+})
+
+-- ==================== TAB 8 : TROLL ====================
+local TrollTab = Window:Tab({ Title = "Troll", Icon = "smile" })
+
+TrollTab:Section({ Title = "Fitur Iseng" })
+
+TrollTab:Button({
+    Title = "Spin Karakter (Berputar-putar)",
+    Callback = function()
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local bv = Instance.new("BodyAngularVelocity")
+            bv.Name = "TrollSpin"
+            bv.MaxTorque = Vector3.new(0, math.huge, 0)
+            bv.AngularVelocity = Vector3.new(0, 50, 0)
+            bv.Parent = char.HumanoidRootPart
+            WindUI:Notify({ Title = "Troll Aktif", Content = "Karaktermu mulai berputar!", Duration = 3 })
+        end
+    end
+})
+
+TrollTab:Button({
+    Title = "Hentikan Spin",
+    Callback = function()
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("TrollSpin") then
+            char.HumanoidRootPart.TrollSpin:Destroy()
+            WindUI:Notify({ Title = "Berhenti", Content = "Putaran dihentikan.", Duration = 3 })
+        end
+    end
+})
+
+-- ==================== TAB 9 : UTILITY ====================
+local UtilityTab = Window:Tab({ Title = "Utility", Icon = "wrench" })
+
+UtilityTab:Section({ Title = "Alat Bantu Sistem" })
+
+UtilityTab:Button({
+    Title = "Anti-AFK (Mencegah Kick Otomatis)",
+    Callback = function()
+        local vu = game:GetService("VirtualUser")
+        game:GetService("Players").LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        end)
+        WindUI:Notify({ Title = "Anti-AFK Aktif", Content = "Kamu aman dari sistem auto-kick game.", Duration = 4 })
+    end
+})
+
+UtilityTab:Button({
+    Title = "Rejoin Game",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+    end,
+})
+
+-- Notifikasi Sukses Load
+WindUI:Notify({
+    Title = "Voidware Loaded!",
+    Content = "WindUI versi terbaru berhasil dijalankan di Delta Executor.",
+    Duration = 5
+})
