@@ -1,0 +1,464 @@
+-- WindUI Library Loader Resmi & Stabil
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local ExecutorName = identifyexecutor and identifyexecutor() or "Delta"
+local ThumbnailUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=420&height=420&format=png"
+
+-- Window Utama
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB | IS BACK",
+    Icon = "",
+    Author = "kyzen868", 
+    Folder = "KyZenHubConfig",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 160,
+    HasOutline = true
+})
+
+-- ==================== TAB 1: HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+
+HomeTab:Section({ Title = "1. Welcome Section" })
+HomeTab:Image({ Image = ThumbnailUrl })
+HomeTab:Paragraph({
+    Title = "Halo, " .. LocalPlayer.Name .. " 👋",
+    Desc = "• Executor: " .. ExecutorName
+})
+
+HomeTab:Section({ Title = "2. Main Button" })
+HomeTab:Button({
+    Title = "Join Saluran WhatsApp",
+    Callback = function()
+        setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J")
+        WindUI:Notify({ Title = "Berhasil", Content = "Link WA disalin ke clipboard.", Duration = 3 })
+    end
+})
+HomeTab:Button({
+    Title = "Akun TT kyzen868",
+    Callback = function()
+        setclipboard("kyzen868")
+        WindUI:Notify({ Title = "Berhasil", Content = "Username TikTok disalin.", Duration = 3 })
+    end
+})
+
+HomeTab:Section({ Title = "3. Update Log" })
+HomeTab:Paragraph({
+    Title = "Riwayat Pembaruan Hub",
+    Desc = "• v4.4: Fixed all ESP/Visual features using stable Roblox Instances for Mobile/Delta."
+})
+
+HomeTab:Section({ Title = "4. Action" })
+HomeTab:Button({
+    Title = "Destroy / Unload HUB",
+    Callback = function()
+        Window:Destroy()
+    end
+})
+
+
+-- ==================== TAB 2: INFORMATION ====================
+local InfoTab = Window:Tab({ Title = "Information", Icon = "info" })
+
+InfoTab:Section({ Title = "1. Player Info" })
+InfoTab:Paragraph({
+    Title = "Informasi Akun",
+    Desc = "• Username: " .. LocalPlayer.Name .. "\n• UserId: " .. LocalPlayer.UserId .. "\n• Account Age: " .. LocalPlayer.AccountAge .. " Hari"
+})
+
+InfoTab:Section({ Title = "2. Game Info" })
+InfoTab:Paragraph({
+    Title = "Status Game",
+    Desc = "• PlaceId: " .. game.PlaceId .. "\n• JobId: " .. game.JobId .. "\n• Player Count: " .. #Players:GetPlayers()
+})
+
+InfoTab:Section({ Title = "3. Hub Info" })
+InfoTab:Paragraph({
+    Title = "KyZen HUB | IS BACK",
+    Desc = "• Version: v4.4\n• Total Fitur: Semua Menu Aktif"
+})
+
+InfoTab:Section({ Title = "4. Server Button" })
+InfoTab:Button({
+    Title = "Copy JobId",
+    Callback = function()
+        setclipboard(game.JobId)
+        WindUI:Notify({ Title = "Berhasil", Content = "JobId disalin.", Duration = 3 })
+    end
+})
+InfoTab:Button({
+    Title = "Rejoin Server",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+})
+
+
+-- ==================== TAB 3: PLAYER ====================
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+local walkSpeedEnabled = false
+local customWalkSpeed = 16
+local moonWalkEnabled = false
+local moonWalkSpeed = 16
+
+PlayerTab:Section({ Title = "1. Kontrol Utama (Fly & Kecepatan)" })
+PlayerTab:Toggle({
+    Title = "Fly", 
+    Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+        WindUI:Notify({ Title = "Fly", Content = V and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+PlayerTab:Input({
+    Title = "Fly Speed", 
+    Default = "50", 
+    Placeholder = "Masukkan angka...", 
+    Callback = function(val) 
+        local num = tonumber(val)
+        if num then 
+            flySpeed = num 
+            WindUI:Notify({ Title = "Fly Speed", Content = "Diubah ke: " .. num, Duration = 2 })
+        end
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Walk Speed", 
+    Default = false, 
+    Callback = function(V) 
+        walkSpeedEnabled = V 
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = V and customWalkSpeed or 16 end
+        WindUI:Notify({ Title = "Walk Speed", Content = V and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+PlayerTab:Input({
+    Title = "Walk Speed Value",
+    Default = "16",
+    Placeholder = "Contoh: 16 atau 35",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            customWalkSpeed = num
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if walkSpeedEnabled and hum then hum.WalkSpeed = customWalkSpeed end
+            WindUI:Notify({ Title = "Walk Speed Value", Content = "Kecepatan diubah ke: " .. num, Duration = 2 })
+        end
+    end
+})
+
+PlayerTab:Section({ Title = "2. Utility & Protection" })
+local infJumpEnabled = false
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+PlayerTab:Toggle({Title = "Infinite Jump", Default = false, Callback = function(state) infJumpEnabled = state WindUI:Notify({ Title = "Infinite Jump", Content = state and "Aktif" or "Mati", Duration = 2 }) end})
+
+local noclipEnabled = false
+RunService.Stepped:Connect(function()
+    if noclipEnabled then
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end
+end)
+PlayerTab:Toggle({Title = "Noclip", Default = false, Callback = function(state) noclipEnabled = state WindUI:Notify({ Title = "Noclip", Content = state and "Aktif" or "Mati", Duration = 2 }) end})
+
+PlayerTab:Button({
+    Title = "Reset Character",
+    Callback = function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.Health = 0 end
+        WindUI:Notify({ Title = "Reset Character", Content = "Karakter berhasil di-reset!", Duration = 2 })
+    end
+})
+
+
+-- ==================== TAB 4: VISUAL / ESP ====================
+local VisualTab = Window:Tab({ Title = "Visual / ESP", Icon = "eye" })
+
+local rainbowBoxEnabled = false
+local playerEspEnabled = false
+local healthEspEnabled = false
+local rainbowChamsEnabled = false
+local fullBrightEnabled = false
+local brightLevel = 2
+local fovEnabled = false
+local fovValue = 70
+local xrayEnabled = false
+
+VisualTab:Section({ Title = "1. Rainbow Box ESP" })
+VisualTab:Toggle({
+    Title = "Rainbow Box ESP (Player & NPC)",
+    Default = false,
+    Callback = function(state)
+        rainbowBoxEnabled = state
+        WindUI:Notify({ Title = "Rainbow Box ESP", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+VisualTab:Section({ Title = "2. Player & NPC ESP" })
+VisualTab:Toggle({
+    Title = "Player & NPC ESP (Name & Distance)",
+    Default = false,
+    Callback = function(state)
+        playerEspEnabled = state
+        WindUI:Notify({ Title = "Player/NPC ESP", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+VisualTab:Toggle({
+    Title = "Health ESP (Darah Musuh/NPC)",
+    Default = false,
+    Callback = function(state)
+        healthEspEnabled = state
+        WindUI:Notify({ Title = "Health ESP", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+VisualTab:Section({ Title = "3. Chams & Lingkungan" })
+VisualTab:Toggle({
+    Title = "Rainbow Chams (Player & NPC)",
+    Default = false,
+    Callback = function(state)
+        rainbowChamsEnabled = state
+        WindUI:Notify({ Title = "Rainbow Chams", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+VisualTab:Toggle({
+    Title = "Full Bright",
+    Default = false,
+    Callback = function(state)
+        fullBrightEnabled = state
+        if not state then
+            Lighting.Brightness = 1
+            Lighting.ClockTime = 14
+            Lighting.GlobalShadows = true
+        end
+        WindUI:Notify({ Title = "Full Bright", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+VisualTab:Toggle({
+    Title = "FOV Pandangan Luas",
+    Default = false,
+    Callback = function(state)
+        fovEnabled = state
+        if not state then Camera.FieldOfView = 70 end
+        WindUI:Notify({ Title = "FOV Pandangan", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+VisualTab:Toggle({
+    Title = "X-Ray (Dinding Transparan)",
+    Default = false,
+    Callback = function(state)
+        xrayEnabled = state
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") and not part.Parent:FindFirstChild("Humanoid") and part.Name ~= "Terrain" then
+                part.Transparency = state and 0.5 or 0
+            end
+        end
+        WindUI:Notify({ Title = "X-Ray", Content = state and "Aktif" or "Mati", Duration = 2 })
+    end
+})
+
+
+-- ==================== FUNGSI PENDESAK & LOOP ESP (PLAYER + NPC) ====================
+local function getCharacters()
+    local list = {}
+    -- Ambil Player lain
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(list, p.Character)
+        end
+    end
+    -- Ambil NPC / Model lain di workspace
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+            local isPlayer = Players:GetPlayerFromCharacter(obj)
+            if not isPlayer and obj ~= LocalPlayer.Character then
+                table.insert(list, obj)
+            end
+        end
+    end
+    return list
+end
+
+-- Task Loop untuk ESP & Rainbow Visual (Stabil di Delta)
+task.spawn(function()
+    while true do
+        local tickTime = tick()
+        local rainbowColor = Color3.fromHSV((tickTime % 5) / 5, 1, 1)
+        
+        -- 1. Rainbow Chams
+        if rainbowChamsEnabled then
+            for _, char in pairs(getCharacters()) do
+                if not char:FindFirstChild("KyZenHighlight") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "KyZenHighlight"
+                    hl.Adornee = char
+                    hl.Parent = char
+                else
+                    char.KyZenHighlight.FillColor = rainbowColor
+                end
+            end
+        else
+            for _, char in pairs(getCharacters()) do
+                if char:FindFirstChild("KyZenHighlight") then
+                    char.KyZenHighlight:Destroy()
+                end
+            end
+        end
+
+        -- 2. Rainbow Box ESP
+        if rainbowBoxEnabled then
+            for _, char in pairs(getCharacters()) do
+                if not char:FindFirstChild("KyZenBox") then
+                    local box = Instance.new("SelectionBox")
+                    box.Name = "KyZenBox"
+                    box.Adornee = char
+                    box.Parent = char
+                else
+                    char.KyZenBox.Color3 = rainbowColor
+                end
+            end
+        else
+            for _, char in pairs(getCharacters()) do
+                if char:FindFirstChild("KyZenBox") then
+                    char.KyZenBox:Destroy()
+                end
+            end
+        end
+
+        -- 3. Player & NPC ESP (Name, Distance & Health)
+        if playerEspEnabled or healthEspEnabled then
+            for _, char in pairs(getCharacters()) do
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChild("Humanoid")
+                if hrp and hum then
+                    local tag = char:FindFirstChild("KyZenESP_Tag")
+                    if not tag then
+                        tag = Instance.new("BillboardGui")
+                        tag.Name = "KyZenESP_Tag"
+                        tag.Size = UDim2.new(0, 200, 0, 50)
+                        tag.StudsOffset = Vector3.new(0, 3, 0)
+                        tag.AlwaysOnTop = true
+                        tag.Parent = char
+                        
+                        local textLabel = Instance.new("TextLabel")
+                        textLabel.Name = "Text"
+                        textLabel.Size = UDim2.new(1, 0, 1, 0)
+                        textLabel.BackgroundTransparency = 1
+                        textLabel.TextColor3 = Color3.new(1, 1, 1)
+                        textLabel.TextStrokeTransparency = 0
+                        textLabel.TextSize = 13
+                        textLabel.Font = Enum.Font.SourceSansBold
+                        textLabel.Parent = tag
+                    end
+                    
+                    local textLabel = tag:FindFirstChild("Text")
+                    if textLabel then
+                        local dist = math.floor((hrp.Position - Camera.CFrame.Position).Magnitude)
+                        local nameText = playerEspEnabled and (char.Name .. " [" .. dist .."m]") or ""
+                        local healthText = healthEspEnabled and ("\nHealth: " .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth)) or ""
+                        textLabel.Text = nameText .. healthText
+                    end
+                end
+            end
+        else
+            for _, char in pairs(getCharacters()) do
+                if char:FindFirstChild("KyZenESP_Tag") then
+                    char.KyZenESP_Tag:Destroy()
+                end
+            end
+        end
+
+        task.wait(0.5)
+    end
+end)
+
+
+-- ==================== LOOP RENDER STEPPED UTAMA ====================
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChild("Humanoid")
+    
+    -- Loop Fly
+    if flyToggled and char:FindFirstChild("HumanoidRootPart") and bodyVelocity and bodyGyro then
+        bodyGyro.CFrame = Camera.CFrame
+        local moveDirection = hum.MoveDirection
+        local ySpeed = 0
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            ySpeed = flySpeed
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            ySpeed = -flySpeed
+        end
+        bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDirection.Magnitude > 0 and flySpeed or 0)) + Vector3.new(0, ySpeed, 0)
+    end
+
+    -- Loop Walk Speed
+    if walkSpeedEnabled and hum then
+        hum.WalkSpeed = customWalkSpeed
+    end
+
+    -- Loop Full Bright
+    if fullBrightEnabled then
+        Lighting.Brightness = brightLevel
+        Lighting.ClockTime = 14
+        Lighting.GlobalShadows = false
+    end
+
+    -- Loop FOV
+    if fovEnabled then
+        Camera.FieldOfView = fovValue
+    end
+
+    -- Loop X-Ray Instan
+    if xrayEnabled then
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") and not part.Parent:FindFirstChild("Humanoid") and part.Name ~= "Terrain" and part.Transparency ~= 0.5 then
+                part.Transparency = 0.5
+            end
+        end
+    end
+end)
+
+WindUI:Notify({ Title = "KyZen HUB", Content = "Berhasil dimuat dengan sempurna! ✅", Duration = 3 })
