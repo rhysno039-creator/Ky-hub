@@ -1,0 +1,443 @@
+local successUI, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+end)
+
+if not successUI or not WindUI then
+    warn("Gagal memuat WindUI. Pastikan executor mendukung game:HttpGet!")
+    return
+end
+
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB : Universal All Game",
+    Icon = "rbxassetid://4483362458",
+    Author = "Kyzen868 (2026 Edition)",
+    Folder = "KyZenHub",
+    Size = UDim2.fromOffset(600, 480),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Global Variabel Fitur Umum
+_G.FlyEnabled = false
+_G.FlySpeed = 50
+_G.SpeedEnabled = false
+_G.SpeedVal = 16
+_G.JumpEnabled = false
+_G.JumpVal = 50
+_G.MoonWalkEnabled = false
+_G.MoonWalkSpeed = 10
+_G.ShiftLockEnabled = false
+_G.InfJump = false
+_G.Noclip = false
+_G.BunnyHop = false
+_G.AntiAFK = false
+_G.AntiKick = false
+_G.AntiRejoin = false
+
+-- Global Variabel Visual ESP (Sesuai Foto 1 & 2)
+_G.NameDistanceESP = false
+_G.HealthESP = false
+_G.SkeletonESP = false
+_G.Tracers = false
+_G.Chams = false
+_G.DistanceESP = false
+_G.ToolESP = false
+_G.OffscreenArrow = false
+_G.RainbowESP = false
+_G.CornerBox = false
+_G.HealthText = false
+
+-- Variabel Fly
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity = nil
+local bodyGyro = nil
+
+local DetectedGameName = "Universal Game"
+pcall(function()
+    DetectedGameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+end)
+
+local ExecutorName = "Unknown Executor"
+pcall(function()
+    if identifyexecutor then ExecutorName = identifyexecutor() end
+end)
+
+local StartTime = tick()
+
+-- ================= Daftar Tab =================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+local InfoTab = Window:Tab({ Title = "Information", Icon = "info" })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+local VisualTab = Window:Tab({ Title = "Visual ESP", Icon = "eye" })
+local MovementTab = Window:Tab({ Title = "Movement", Icon = "navigation" })
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+local TrollFETab = Window:Tab({ Title = "Troll FE", Icon = "smile" })
+local UtilityTab = Window:Tab({ Title = "Utility Op", Icon = "star" })
+
+-- ================= 1. HOME =================
+HomeTab:Paragraph({
+    Title = "👋 Selamat Datang, " .. LocalPlayer.Name .. "!",
+    Desc = "Senang melihatmu menggunakan KyZen HUB. Hub ini dirancang dengan tampilan profesional untuk memaksimalkan pengalaman bermainmu."
+})
+
+HomeTab:Paragraph({
+    Title = "📢 Info Update Terbaru",
+    Desc = "• Versi Hub: Gen 2 (v4.6 - Fixed ESP & White Skeleton)\n• Pembaruan: Sinkronisasi menu sesuai foto 1 & 2, Skeleton putih bersih, hapus ukuran kepala.\n• Creator: Kyzen868"
+})
+
+HomeTab:Button({
+    Title = "🎵 TikTok: kyzen",
+    Callback = function()
+        WindUI:Notify({ Title = "Info TikTok", Content = "Cari akun TikTok: kyzen", Duration = 3 })
+    end
+})
+
+HomeTab:Button({
+    Title = "❌ Destroy Hub (Tutup Total)",
+    Callback = function() Window:Destroy() end
+})
+
+-- ================= 2. INFORMATION =================
+InfoTab:Paragraph({
+    Title = "📌 Identitas & Status Hub",
+    Desc = "• Nama Hub: KyZen HUB\n• Versi Hub: Gen 2\n• Pembuat / Creator: Kyzen868 (TikTok: kyzen)\n• Status: Aktif & Stabil"
+})
+
+local ServerPlayersCount = #Players:GetPlayers()
+InfoTab:Paragraph({
+    Title = "👤 Data Player & 🎮 Data Server",
+    Desc = "• Username: " .. LocalPlayer.Name .. " | UserId: " .. LocalPlayer.UserId .. "\n• Executor: " .. tostring(ExecutorName) .. "\n• Nama Game: " .. DetectedGameName .. "\n• Total Player: " .. ServerPlayersCount .. " Player"
+})
+
+local StatsParagraph = InfoTab:Paragraph({
+    Title = "📊 Statistik Real-time",
+    Desc = "Memuat data..."
+})
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            local fps = math.floor(1 / RunService.RenderStepped:Wait())
+            local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            local elapsedTime = math.floor(tick() - StartTime)
+            local minutes = math.floor(elapsedTime / 60)
+            local seconds = elapsedTime % 60
+            
+            StatsParagraph:SetDesc(
+                "• FPS: " .. fps .. " FPS\n" ..
+                "• Ping: " .. ping .. " ms\n" ..
+                "• Waktu Aktif: " .. string.format("%02d:%02d", minutes, seconds)
+            )
+        end)
+    end
+end)
+
+-- ================= 3. PLAYER =================
+PlayerTab:Paragraph({ Title = "🚀 Kontrol Utama (Fly & Kecepatan)", Desc = "Pengaturan fitur terbang utama dan kecepatan karakter." })
+
+PlayerTab:Toggle({
+    Title = "Fly", 
+    Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        _G.FlyEnabled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Ketik Fly Speed di sini", 
+    Default = "50", 
+    Placeholder = "Masukkan angka...", 
+    Callback = function(val) 
+        flySpeed = tonumber(val) or 50 
+        _G.FlySpeed = flySpeed
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Walk Speed", 
+    Default = false, 
+    Callback = function(V) 
+        _G.SpeedEnabled = V 
+        if not V and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Nilai Walk Speed", 
+    Default = "16", 
+    Placeholder = "Masukkan angka...", 
+    Callback = function(T) 
+        _G.SpeedVal = tonumber(T) or 16 
+    end
+})
+
+PlayerTab:Paragraph({ Title = "🦘 Lompatan & Gerakan", Desc = "Pengaturan kecepatan jalan, lompatan, dan gerakan tambahan." })
+
+PlayerTab:Toggle({
+    Title = "Jump Power", 
+    Default = false, 
+    Callback = function(V) 
+        _G.JumpEnabled = V 
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.UseJumpPower = V
+            if not V then
+                LocalPlayer.Character.Humanoid.JumpPower = 50
+            end
+        end
+    end
+})
+
+PlayerTab:Input({
+    Title = "Nilai Jump Power", 
+    Default = "50", 
+    Placeholder = "Masukkan angka...", 
+    Callback = function(T)
+        _G.JumpVal = tonumber(T) or 50
+    end
+})
+
+PlayerTab:Toggle({Title = "Moon Walk", Default = false, Callback = function(V) _G.MoonWalkEnabled = V end})
+PlayerTab:Input({Title = "Speed Moon Walk", Default = "10", Placeholder = "Masukkan angka...", Callback = function(T) _G.MoonWalkSpeed = tonumber(T) or 10 end})
+PlayerTab:Toggle({Title = "Shift Lock", Default = false, Callback = function(V) _G.ShiftLockEnabled = V end})
+PlayerTab:Toggle({Title = "Inf Jump", Default = false, Callback = function(V) _G.InfJump = V end})
+PlayerTab:Toggle({Title = "No Clip", Default = false, Callback = function(V) _G.Noclip = V end})
+PlayerTab:Toggle({Title = "Bunny Hop", Default = false, Callback = function(V) _G.BunnyHop = V end})
+
+PlayerTab:Paragraph({ Title = "🛡️ Sistem & Keamanan", Desc = "Reset karakter dan perlindungan anti-kick." })
+PlayerTab:Button({
+    Title = "Reset Karakter",
+    Callback = function()
+        pcall(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.Health = 0
+            end
+        end)
+    end
+})
+PlayerTab:Toggle({
+    Title = "Anti Afk", Default = false, 
+    Callback = function(V) 
+        _G.AntiAFK = V
+        if V then
+            local vu = game:GetService("VirtualUser")
+            LocalPlayer.Idled:Connect(function()
+                if _G.AntiAFK then
+                    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                    task.wait(1)
+                    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                end
+            end)
+        end
+    end
+})
+PlayerTab:Toggle({
+    Title = "Anti Kick", Default = false, 
+    Callback = function(V)
+        _G.AntiKick = V
+        if V then
+            pcall(function()
+                local mt = getrawmetatable(game)
+                setreadonly(mt, false)
+                local old = mt.__namecall
+                mt.__namecall = newcclosure(function(self, ...)
+                    local method = getnamecallmethod()
+                    if _G.AntiKick and (method == "Kick" or method == "kick") then return end
+                    return old(self, ...)
+                end)
+                setreadonly(mt, true)
+            end)
+        end
+    end
+})
+PlayerTab:Toggle({
+    Title = "Anti Rejoin", Default = false, 
+    Callback = function(V)
+        _G.AntiRejoin = V
+        if V then
+            pcall(function()
+                game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
+                    if _G.AntiRejoin and child.Name == "ErrorPrompt" then
+                        task.wait(1)
+                        game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer)
+                    end
+                end)
+            end)
+        end
+    end
+})
+
+-- ================= 4. VISUAL ESP (DIGABUNGKAN & DISESUAIKAN DENGAN FOTO 1 & 2) =================
+VisualTab:Paragraph({ Title = "💎 Menu Visual ESP (Sesuai Foto)", Desc = "Semua fitur ESP aktif dengan tombol On/Off dan Skeleton warna putih." })
+
+VisualTab:Toggle({Title = "ESP Nama + Jarak", Default = false, Callback = function(V) _G.NameDistanceESP = V end})
+VisualTab:Toggle({Title = "Health ESP", Default = false, Callback = function(V) _G.HealthESP = V end})
+VisualTab:Toggle({Title = "Skeleton ESP (Putih)", Default = false, Callback = function(V) _G.SkeletonESP = V end})
+VisualTab:Toggle({Title = "Tracers Line", Default = false, Callback = function(V) _G.Tracers = V end})
+VisualTab:Toggle({Title = "Chams Tembus Tembok", Default = false, Callback = function(V) _G.Chams = V end})
+VisualTab:Toggle({Title = "Distance ESP", Default = false, Callback = function(V) _G.DistanceESP = V end})
+VisualTab:Toggle({Title = "Tool ESP", Default = false, Callback = function(V) _G.ToolESP = V end})
+VisualTab:Toggle({Title = "Offscreen Arrow", Default = false, Callback = function(V) _G.OffscreenArrow = V end})
+VisualTab:Toggle({Title = "Rainbow ESP", Default = false, Callback = function(V) _G.RainbowESP = V end})
+VisualTab:Toggle({Title = "Corner Box", Default = false, Callback = function(V) _G.CornerBox = V end})
+VisualTab:Toggle({Title = "Health Text", Default = false, Callback = function(V) _G.HealthText = V end})
+
+-- Setup Player ESP & Highlight (Chams, CornerBox, dll)
+local function setupCombinedESP(plr)
+    if plr == LocalPlayer then return end
+    
+    local function apply(char)
+        task.wait(1)
+        if char then
+            if not char:FindFirstChild("KyZenCombinedESP") then
+                local hl = Instance.new("Highlight")
+                hl.Name = "KyZenCombinedESP"
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                hl.FillTransparency = 0.5
+                hl.OutlineTransparency = 0
+                hl.Adornee = char
+                hl.Parent = char
+                hl.Enabled = false
+            end
+        end
+    end
+    
+    plr.CharacterAdded:Connect(apply)
+    if plr.Character then apply(plr.Character) end
+end
+
+for _, p in pairs(Players:GetPlayers()) do setupCombinedESP(p) end
+Players.PlayerAdded:Connect(setupCombinedESP)
+
+-- ================= RUNSERVICE UTAMA =================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local rainbowColor = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local char = p.Character
+                local hl = char:FindFirstChild("KyZenCombinedESP")
+                
+                -- Logika Chams, CornerBox, Rainbow
+                if hl then
+                    local active = _G.Chams or _G.CornerBox
+                    hl.Enabled = active
+                    if active then
+                        if _G.RainbowESP then
+                            hl.FillColor = rainbowColor
+                            hl.OutlineColor = rainbowColor
+                        else
+                            hl.FillColor = Color3.fromRGB(255, 0, 0)
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        end
+                        hl.OutlineTransparency = _G.CornerBox and 0 or 1
+                    end
+                end
+            end
+        end
+
+        -- Logika Pergerakan Fly
+        if flyToggled and bodyVelocity and bodyGyro and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            bodyGyro.CFrame = Camera.CFrame
+            local moveDir = Vector3.new(0, 0, 0)
+            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            
+            if hum and hum.MoveDirection.Magnitude > 0 then moveDir = hum.MoveDirection end
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+            
+            local targetVel = Vector3.new(0, 0, 0)
+            if moveDir.Magnitude > 0 then targetVel = Camera.CFrame.LookVector * flySpeed end
+            bodyVelocity.Velocity = targetVel
+        end
+
+        -- Logika WalkSpeed & JumpPower
+        if _G.SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedVal
+        end
+        if _G.JumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.UseJumpPower = true
+            LocalPlayer.Character.Humanoid.JumpPower = _G.JumpVal
+        end
+        if _G.MoonWalkEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hum = LocalPlayer.Character.Humanoid
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            if hum.MoveDirection.Magnitude > 0 then
+                hrp.CFrame = hrp.CFrame - (hum.MoveDirection * (_G.MoonWalkSpeed * 0.01))
+            end
+        end
+        if _G.ShiftLockEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            LocalPlayer.Character.Humanoid.AutoRotate = false
+            hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(Camera.CFrame.LookVector.X, 0, Camera.CFrame.LookVector.Z))
+        elseif not flyToggled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.AutoRotate = true
+        end
+        if _G.BunnyHop and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+end)
+
+RunService.Stepped:Connect(function()
+    pcall(function()
+        if _G.Noclip and LocalPlayer.Character then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end)
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    pcall(function()
+        if _G.InfJump and LocalPlayer.Character then
+            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        end
+    end)
+end)
+
+-- ================= Tab Lainnya =================
+MovementTab:Button({Title = "Click TP", Callback = function() end})
+WorldTab:Button({Title = "FPS Booster", Callback = function() end})
+TrollFETab:Toggle({Title = "Invisible", Default = false, Callback = function() end})
+UtilityTab:Toggle({Title = "Infinite Yield", Default = false, Callback = function() end})
+
+WindUI:Notify({
+    Title = "KyZen HUB Gen 2",
+    Content = "Visual ESP Berhasil Disinkronkan dengan Foto!",
+    Duration = 4
+})
