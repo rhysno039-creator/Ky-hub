@@ -1,0 +1,326 @@
+-- Memuat WindUI Library untuk Hub Utama
+local Success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://tree-hub.vercel.app/api/UI/WindUI"))()
+end)
+
+if not Success or not WindUI then
+    Success, WindUI = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+    end)
+end
+
+if not Success or not WindUI then
+    warn("Gagal memuat WindUI! Executor Anda mungkin tidak mendukung fungsi yang diperlukan.")
+    return
+end
+
+-- Memuat Fluent UI untuk UI Terpisah Teleport & Run
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local ExecutorName = identifyexecutor and identifyexecutor() or "Executor"
+local ThumbnailUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=420&height=420&format=png"
+
+-- Window Utama WindUI
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB | IS BACK",
+    Icon = "",
+    Author = "kyzen868", 
+    Folder = "KyZenHubConfig",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 160,
+    HasOutline = true
+})
+
+-- ==================== TAB 1: HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+HomeTab:Section({ Title = "1. Welcome Section" })
+HomeTab:Image({ Image = ThumbnailUrl })
+HomeTab:Paragraph({ Title = "Halo, " .. LocalPlayer.Name .. " 👋", Desc = "• Executor: " .. ExecutorName })
+
+HomeTab:Section({ Title = "2. Main Button" })
+HomeTab:Button({
+    Title = "Join Saluran WhatsApp",
+    Callback = function()
+        pcall(function() setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J") end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Link WA disalin ke clipboard.", Duration = 3 })
+    end
+})
+HomeTab:Button({
+    Title = "Akun TT kyzen868",
+    Callback = function()
+        pcall(function() setclipboard("kyzen868") end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Username TikTok disalin.", Duration = 3 })
+    end
+})
+
+HomeTab:Section({ Title = "3. Action" })
+HomeTab:Button({
+    Title = "Destroy / Unload HUB",
+    Callback = function() Window:Destroy() end
+})
+
+
+-- ==================== TAB 2: INFORMATION ====================
+local InfoTab = Window:Tab({ Title = "Information", Icon = "info" })
+InfoTab:Section({ Title = "1. Player Info" })
+InfoTab:Paragraph({ Title = "Informasi Akun", Desc = "• Username: " .. LocalPlayer.Name .. "\n• UserId: " .. LocalPlayer.UserId })
+
+
+-- ==================== TAB 3: PLAYER ====================
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+PlayerTab:Section({ Title = "1. Kontrol Utama" })
+PlayerTab:Toggle({
+    Title = "Fly", Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end
+})
+PlayerTab:Input({
+    Title = "Fly Speed", Default = "50", Placeholder = "Masukkan angka...", 
+    Callback = function(val) local num = tonumber(val) if num then flySpeed = num end end
+})
+
+
+-- ==================== TAB 4: VISUAL / ESP ====================
+local VisualTab = Window:Tab({ Title = "Visual / ESP", Icon = "eye" })
+local fullBrightEnabled = false
+VisualTab:Toggle({
+    Title = "Full Bright", Default = false,
+    Callback = function(state)
+        fullBrightEnabled = state
+        if not state then Lighting.Brightness = 1 Lighting.GlobalShadows = true end
+    end
+})
+
+
+-- ==================== TAB 5: WORLD ====================
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+WorldTab:Button({
+    Title = "Server Hop",
+    Callback = function()
+        pcall(function()
+            local servers = {}
+            local req = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            if req and req.data then
+                for _, s in pairs(req.data) do
+                    if s.playing < s.maxPlayers and s.id ~= game.JobId then table.insert(servers, s.id) end
+                end
+            end
+            if #servers > 0 then TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer) end
+        end)
+    end
+})
+
+
+-- ==================== TAB 6: TROLL & TP ====================
+local TrollTab = Window:Tab({ Title = "Troll & TP", Icon = "crosshair" })
+local selectedTarget = nil
+local tpSpeed = 16
+
+TrollTab:Section({ Title = "1. Target Pemilik" })
+local playerList = {}
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then table.insert(playerList, p.Name) end
+end
+
+local dropdownRef
+dropdownRef = TrollTab:Dropdown({
+    Title = "List Player",
+    Values = playerList,
+    Callback = function(val) selectedTarget = val end
+})
+
+TrollTab:Button({
+    Title = "Refresh Player List",
+    Callback = function()
+        local newList = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then table.insert(newList, p.Name) end
+        end
+        dropdownRef:SetValues(newList)
+        WindUI:Notify({ Title = "Refresh", Content = "Daftar player diperbarui.", Duration = 2 })
+    end
+})
+
+TrollTab:Section({ Title = "2. Aksi Teleportasi & Troll" })
+TrollTab:Button({
+    Title = "Teleport ke Player Terpilih",
+    Callback = function()
+        if selectedTarget then
+            local targetPlayer = Players:FindFirstChild(selectedTarget)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myHrp then
+                    myHrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                    WindUI:Notify({ Title = "Teleport", Content = "Berpindah ke " .. selectedTarget, Duration = 2 })
+                end
+            end
+        end
+    end
+})
+
+TrollTab:Input({
+    Title = "Atur Speed Teleport / Run", Default = "16", Placeholder = "Kecepatan...",
+    Callback = function(val) local num = tonumber(val) if num then tpSpeed = num end end
+})
+
+TrollTab:Button({
+    Title = "Save and Run (Walkto Target)",
+    Callback = function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum and selectedTarget then
+            local targetPlayer = Players:FindFirstChild(selectedTarget)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                hum.WalkSpeed = tpSpeed
+                hum:MoveTo(targetPlayer.Character.HumanoidRootPart.Position)
+            end
+        end
+    end
+})
+
+-- ==================== UI TERPISAH FLUENT (TELEPORT & RUN) ====================
+TrollTab:Section({ Title = "3. Menu Teleport & Run Terpisah" })
+
+local fluentWindowOpened = false
+
+local function OpenFluentTeleportUI()
+    if fluentWindowOpened then return end
+    fluentWindowOpened = true
+
+    local FluentWindow = Fluent:CreateWindow({
+        Title = "Teleport & Run Hub",
+        SubTitle = "by kyzen868",
+        TabWidth = 120,
+        Size = UDim2.fromOffset(480, 380),
+        Acrylic = false,
+        Theme = "Dark",
+        MinimizeKey = Enum.KeyCode.LeftControl
+    })
+
+    local FluentTab = FluentWindow:AddTab({ Title = "5 Locations", Icon = "map-pin" })
+    local savedLocations = {}
+    local fluentRunSpeed = 16
+
+    FluentTab:AddInput("FluentRunSpeedInput", {
+        Title = "Run Speed (1 - 100)",
+        Default = "16",
+        Placeholder = "Masukkan angka...",
+        Numeric = true,
+        Finished = true,
+        Callback = function(Value)
+            local num = tonumber(Value)
+            if num then fluentRunSpeed = math.clamp(num, 1, 100) end
+        end
+    })
+
+    for i = 1, 5 do
+        FluentTab:AddParagraph({
+            Title = "Slot Lokasi " .. i,
+            Content = "Simpan posisi atau lakukan aksi teleport/run."
+        })
+
+        FluentTab:AddButton({
+            Title = "Slot " .. i .. " - Save Posisi",
+            Callback = function()
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    savedLocations[i] = hrp.CFrame
+                    Fluent:Notify({ Title = "Berhasil", Content = "Posisi slot " .. i .. " disimpan!", Duration = 2 })
+                end
+            end
+        })
+
+        FluentTab:AddButton({
+            Title = "Slot " .. i .. " - Teleport Instan",
+            Callback = function()
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp and savedLocations[i] then
+                    hrp.CFrame = savedLocations[i]
+                else
+                    Fluent:Notify({ Title = "Gagal", Content = "Lokasi slot " .. i .. " belum ada!", Duration = 2 })
+                end
+            end
+        })
+
+        FluentTab:AddButton({
+            Title = "Slot " .. i .. " - Run (Jalan ke Lokasi)",
+            Callback = function()
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hum and hrp and savedLocations[i] then
+                    hum.WalkSpeed = fluentRunSpeed
+                    hum:MoveTo(savedLocations[i].Position)
+                else
+                    Fluent:Notify({ Title = "Gagal", Content = "Lokasi slot " .. i .. " belum ada!", Duration = 2 })
+                end
+            end
+        })
+    end
+
+    -- Deteksi saat window Fluent ditutup untuk mereset status
+    FluentWindow.CloseEvent:Connect(function()
+        fluentWindowOpened = false
+    end)
+
+    WindUI:Notify({ Title = "Fluent UI", Content = "Menu Teleport & Run berhasil dibuka!", Duration = 2 })
+end
+
+TrollTab:Button({
+    Title = "Buka Menu Teleport & Run (Fluent)",
+    Callback = function()
+        OpenFluentTeleportUI()
+    end
+})
+
+
+-- ==================== LOOP RUNTIME ====================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = char:FindFirstChild("Humanoid")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        
+        if flyToggled and hrp and bodyVelocity and bodyGyro then
+            bodyGyro.CFrame = Camera.CFrame
+            local moveDirection = hum.MoveDirection
+            local ySpeed = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then ySpeed = flySpeed end
+            bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDirection.Magnitude > 0 and flySpeed or 0)) + Vector3.new(0, ySpeed, 0)
+        end
+        if fullBrightEnabled then Lighting.Brightness = 2 Lighting.GlobalShadows = false end
+    end)
+end)
+
+WindUI:Notify({ Title = "KyZen HUB", Content = "Berhasil Diexecute! ✅", Duration = 3 })
