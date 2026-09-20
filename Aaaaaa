@@ -1,0 +1,454 @@
+-- Memuat WindUI Library Resmi
+local Success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/refs/heads/main/main.lua"))()
+end)
+
+if not Success or not WindUI then
+    -- Fallback link alternatif
+    Success, WindUI = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+    end)
+end
+
+if not Success or not WindUI then
+    warn("Gagal memuat WindUI Library!")
+    return
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local ExecutorName = identifyexecutor and identifyexecutor() or "Executor"
+local ThumbnailUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=420&height=420&format=png"
+
+-- Window Utama WindUI
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB",
+    Icon = "",
+    Author = "kyzen868", 
+    Folder = "KyZenHubConfig",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 160,
+    HasOutline = true
+})
+
+-- ==================== TAB 1: HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+HomeTab:Section({ Title = "1. Welcome Section" })
+HomeTab:Image({ Image = ThumbnailUrl })
+HomeTab:Paragraph({ Title = "Halo, " .. LocalPlayer.Name .. " 👋", Desc = "• Executor: " .. ExecutorName })
+
+HomeTab:Section({ Title = "2. Main Button" })
+HomeTab:Button({
+    Title = "Join Saluran WhatsApp",
+    Callback = function()
+        pcall(function() setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J") end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Link WA disalin ke clipboard.", Duration = 3 })
+    end
+})
+HomeTab:Button({
+    Title = "Akun TT kyzen868",
+    Callback = function()
+        pcall(function() setclipboard("kyzen868") end)
+        WindUI:Notify({ Title = "Berhasil", Content = "Username TikTok disalin.", Duration = 3 })
+    end
+})
+
+HomeTab:Section({ Title = "3. Update Log" })
+HomeTab:Paragraph({ Title = "Riwayat Pembaruan Hub", Desc = "• v10.1: Stable Single-UI Fixed Version." })
+
+HomeTab:Section({ Title = "4. Action" })
+HomeTab:Button({
+    Title = "Destroy / Unload HUB",
+    Callback = function() Window:Destroy() end
+})
+
+
+-- ==================== TAB 2: INFORMATION ====================
+local InfoTab = Window:Tab({ Title = "Information", Icon = "info" })
+InfoTab:Section({ Title = "1. Player Info" })
+InfoTab:Paragraph({ Title = "Informasi Akun", Desc = "• Username: " .. LocalPlayer.Name .. "\n• UserId: " .. LocalPlayer.UserId .. "\n• Account Age: " .. LocalPlayer.AccountAge .. " Hari" })
+InfoTab:Section({ Title = "2. Game Info" })
+InfoTab:Paragraph({ Title = "Status Game", Desc = "• PlaceId: " .. game.PlaceId .. "\n• JobId: " .. game.JobId .. "\n• Player Count: " .. #Players:GetPlayers() })
+
+
+-- ==================== TAB 3: PLAYER ====================
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+local walkSpeedEnabled = false
+local customWalkSpeed = 16
+local jumpPowerEnabled = false
+local customJumpPower = 50
+local noclipEnabled = false
+local bunnyHopEnabled = false
+local infJumpEnabled = false
+local antiAfkEnabled = false
+local shiftLockEnabled = false
+
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+LocalPlayer.Idled:Connect(function()
+    if antiAfkEnabled then
+        local vu = game:GetService("VirtualUser")
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end
+end)
+
+PlayerTab:Section({ Title = "1. Kontrol Utama" })
+PlayerTab:Toggle({
+    Title = "Fly", Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end
+})
+PlayerTab:Input({
+    Title = "Fly Speed", Default = "50", Placeholder = "Masukkan angka...", 
+    Callback = function(val) local num = tonumber(val) if num then flySpeed = num end end
+})
+PlayerTab:Toggle({
+    Title = "Walk Speed", Default = false, 
+    Callback = function(V) walkSpeedEnabled = V local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") if hum then hum.WalkSpeed = V and customWalkSpeed or 16 end end
+})
+PlayerTab:Input({
+    Title = "Walk Speed Value", Default = "16", Placeholder = "Contoh: 16",
+    Callback = function(value) local num = tonumber(value) if num then customWalkSpeed = num end end
+})
+PlayerTab:Toggle({
+    Title = "Jump Power", Default = false,
+    Callback = function(state)
+        jumpPowerEnabled = state
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.UseJumpPower = state hum.JumpPower = state and customJumpPower or 50 end
+    end
+})
+PlayerTab:Input({
+    Title = "Jump Power Value", Default = "50", Placeholder = "Contoh: 50",
+    Callback = function(val) local num = tonumber(val) if num then customJumpPower = num end end
+})
+
+PlayerTab:Section({ Title = "2. Gerakan & Utilitas" })
+PlayerTab:Toggle({ Title = "Bunny Hop", Default = false, Callback = function(state) bunnyHopEnabled = state end })
+PlayerTab:Toggle({ Title = "Noclip", Default = false, Callback = function(state) noclipEnabled = state end })
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+PlayerTab:Toggle({ Title = "Infinite Jump", Default = false, Callback = function(state) infJumpEnabled = state end })
+PlayerTab:Toggle({
+    Title = "Shift Lock", Default = false, 
+    Callback = function(V) 
+        shiftLockEnabled = V
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.AutoRotate = not V end
+    end
+})
+
+PlayerTab:Section({ Title = "3. Proteksi & Ekstra" })
+PlayerTab:Button({
+    Title = "Reset Character",
+    Callback = function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.Health = 0 end
+    end
+})
+PlayerTab:Toggle({ Title = "Anti AFK", Default = false, Callback = function(state) antiAfkEnabled = state end })
+
+
+-- ==================== TAB 4: VISUAL / ESP ====================
+local VisualTab = Window:Tab({ Title = "Visual / ESP", Icon = "eye" })
+local rainbowHitboxEnabled = false
+local hitboxSizeValue = 5 
+local rainbowEspEnabled = false
+local rainbowHealthEspEnabled = false
+local rainbowChamsEspEnabled = false
+local fullBrightEnabled = false
+local brightLevelValue = 2 
+local fovEnabled = false
+local fovValue = 70
+
+local function getCharacters()
+    local list = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(list, p.Character)
+        end
+    end
+    return list
+end
+
+VisualTab:Section({ Title = "Rainbow HitBox & ESP" })
+VisualTab:Toggle({
+    Title = "Rainbow Hitbox ESP", Default = false,
+    Callback = function(state)
+        rainbowHitboxEnabled = state
+        if not state then
+            for _, char in pairs(getCharacters()) do
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then hrp.Size = Vector3.new(2, 2, 1) hrp.Transparency = 1 hrp.CanCollide = true end
+            end
+        end
+    end
+})
+VisualTab:Input({
+    Title = "Size HitBox", Default = "5", Placeholder = "Masukkan angka...",
+    Callback = function(value) local num = tonumber(value) if num then hitboxSizeValue = num end end
+})
+VisualTab:Toggle({Title = "Rainbow Esp", Default = false, Callback = function(state) rainbowEspEnabled = state end})
+VisualTab:Toggle({Title = "Rainbow Health esp", Default = false, Callback = function(state) rainbowHealthEspEnabled = state end})
+VisualTab:Toggle({Title = "Rainbow Chamts esp", Default = false, Callback = function(state) rainbowChamsEspEnabled = state end})
+
+VisualTab:Section({ Title = "Brightness and POV" })
+VisualTab:Toggle({
+    Title = "Full Bright", Default = false,
+    Callback = function(state)
+        fullBrightEnabled = state
+        if not state then Lighting.Brightness = 1 Lighting.GlobalShadows = true end
+    end
+})
+VisualTab:Input({
+    Title = "Atur nilai bright", Default = "2", Placeholder = "Contoh: 2, 5",
+    Callback = function(val) local num = tonumber(val) if num then brightLevelValue = num end end
+})
+VisualTab:Toggle({
+    Title = "Fov", Default = false,
+    Callback = function(state) fovEnabled = state if not state then Camera.FieldOfView = 70 end end
+})
+VisualTab:Input({
+    Title = "Nilai Fov", Default = "70", Placeholder = "Contoh: 90, 120",
+    Callback = function(val) local num = tonumber(val) if num then fovValue = num end end
+})
+
+
+-- ==================== TAB 5: WORLD ====================
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+WorldTab:Section({ Title = "1. Performa Game" })
+WorldTab:Button({
+    Title = "FPS Boost",
+    Callback = function()
+        pcall(function()
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") then v.Enabled = false end
+            end
+            Lighting.GlobalShadows = false
+            WindUI:Notify({ Title = "FPS Boost", Content = "Grafik dioptimalkan!", Duration = 3 })
+        end)
+    end
+})
+WorldTab:Section({ Title = "2. Navigasi Server" })
+WorldTab:Button({
+    Title = "Server Hop",
+    Callback = function()
+        pcall(function()
+            local servers = {}
+            local req = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            if req and req.data then
+                for _, s in pairs(req.data) do
+                    if s.playing < s.maxPlayers and s.id ~= game.JobId then table.insert(servers, s.id) end
+                end
+            end
+            if #servers > 0 then TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer) end
+        end)
+    end
+})
+WorldTab:Button({ Title = "Rejoin Server", Callback = function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end })
+WorldTab:Button({ Title = "Copy JobId", Callback = function() pcall(function() setclipboard(game.JobId) end) end })
+
+
+-- ==================== TAB 6: TROLL, TP & 5 LOCATIONS ====================
+local TrollTab = Window:Tab({ Title = "Troll & TP", Icon = "crosshair" })
+local selectedTarget = nil
+local tpSpeed = 16
+local ghostOtherEnabled = false
+local flingAllEnabled = false
+
+TrollTab:Section({ Title = "1. Fitur Troll" })
+TrollTab:Toggle({
+    Title = "Ghost Other Player", Default = false,
+    Callback = function(state)
+        ghostOtherEnabled = state
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                for _, part in pairs(p.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.Transparency = state and 1 or 0 end
+                end
+            end
+        end
+    end
+})
+TrollTab:Toggle({ Title = "Fling All (Dekat Aktif)", Default = false, Callback = function(state) flingAllEnabled = state end })
+TrollTab:Button({
+    Title = "Bring All Players",
+    Callback = function()
+        local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myHrp then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.CFrame = myHrp.CFrame + Vector3.new(3, 0, 0)
+                end
+            end
+        end
+    end
+})
+
+TrollTab:Section({ Title = "2. Target Pemilik" })
+local playerList = {}
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then table.insert(playerList, p.Name) end
+end
+
+local dropdownRef = TrollTab:Dropdown({
+    Title = "List Player", Values = playerList,
+    Callback = function(val) selectedTarget = val end
+})
+TrollTab:Button({
+    Title = "Refresh Player List",
+    Callback = function()
+        local newList = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then table.insert(newList, p.Name) end
+        end
+        dropdownRef:SetValues(newList)
+    end
+})
+
+TrollTab:Section({ Title = "3. Aksi Teleportasi Target" })
+TrollTab:Button({
+    Title = "Teleport ke Player Terpilih",
+    Callback = function()
+        if selectedTarget then
+            local targetPlayer = Players:FindFirstChild(selectedTarget)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myHrp then myHrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0) end
+            end
+        end
+    end
+})
+TrollTab:Input({
+    Title = "Atur Speed Teleport / Run", Default = "16", Placeholder = "Kecepatan...",
+    Callback = function(val) local num = tonumber(val) if num then tpSpeed = num end end
+})
+TrollTab:Button({
+    Title = "Save and Run (Walkto Target)",
+    Callback = function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum and selectedTarget then
+            local targetPlayer = Players:FindFirstChild(selectedTarget)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                hum.WalkSpeed = tpSpeed
+                hum:MoveTo(targetPlayer.Character.HumanoidRootPart.Position)
+            end
+        end
+    end
+})
+
+-- Bagian 5 Slot Lokasi (Diintegrasikan langsung ke Tab WindUI agar aman dari error pemuatan ganda)
+TrollTab:Section({ Title = "4. 5 Slot Lokasi & Teleport" })
+local savedLocations = {}
+local slotRunSpeed = 16
+
+TrollTab:Input({
+    Title = "Slot Run Speed", Default = "16", Placeholder = "Masukkan angka...",
+    Callback = function(Value)
+        local num = tonumber(Value)
+        if num then slotRunSpeed = math.clamp(num, 1, 100) end
+    end
+})
+
+for i = 1, 5 do
+    TrollTab:Section({ Title = "Slot Lokasi " .. i })
+    TrollTab:Button({
+        Title = "Slot " .. i .. " - Save Posisi",
+        Callback = function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                savedLocations[i] = hrp.CFrame
+                WindUI:Notify({ Title = "Berhasil", Content = "Posisi slot " .. i .. " disimpan!", Duration = 2 })
+            end
+        end
+    })
+    TrollTab:Button({
+        Title = "Slot " .. i .. " - Teleport Instan",
+        Callback = function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and savedLocations[i] then
+                hrp.CFrame = savedLocations[i]
+            else
+                WindUI:Notify({ Title = "Gagal", Content = "Lokasi slot " .. i .. " belum ada!", Duration = 2 })
+            end
+        end
+    })
+    TrollTab:Button({
+        Title = "Slot " .. i .. " - Run (Jalan ke Lokasi)",
+        Callback = function()
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            if hum and savedLocations[i] then
+                hum.WalkSpeed = slotRunSpeed
+                hum:MoveTo(savedLocations[i].Position)
+            else
+                WindUI:Notify({ Title = "Gagal", Content = "Lokasi slot " .. i .. " belum ada!", Duration = 2 })
+            end
+        end
+    })
+end
+
+
+-- ==================== LOOP RUNTIME GLOBAL ====================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = char:FindFirstChild("Humanoid")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        
+        if flyToggled and hrp and bodyVelocity and bodyGyro then
+            bodyGyro.CFrame = Camera.CFrame
+            local moveDirection = hum.MoveDirection
+            local ySpeed = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then ySpeed = flySpeed end
+            bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDirection.Magnitude > 0 and flySpeed or 0)) + Vector3.new(0, ySpeed, 0)
+        end
+        if walkSpeedEnabled and hum then hum.WalkSpeed = customWalkSpeed end
+        if jumpPowerEnabled and hum then hum.JumpPower = customJumpPower end
+        if bunnyHopEnabled and hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        if noclipEnabled then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+        if fullBrightEnabled then Lighting.Brightness = brightLevelValue Lighting.GlobalShadows = false end
+        if fovEnabled then Camera.FieldOfView = fovValue end
+    end)
+end)
+
+WindUI:Notify({ Title = "KyZen HUB", Content = "Script Berhasil Dijalankan Tanpa Konflik UI! ✅", Duration = 3 })
