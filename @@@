@@ -1,0 +1,299 @@
+-- Memuat WindUI Library dengan Aman
+local success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+end)
+
+if not success or not WindUI then
+    warn("WindUI gagal dimuat!")
+    return
+end
+
+-- Layanan Roblox
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
+-- Mendapatkan info executor aman
+local executorName = "Unknown"
+pcall(function()
+    if identifyexecutor then executorName = identifyexecutor()
+    elseif getexecutorname then executorName = getexecutorname() end
+end)
+
+-- Membuat Window Utama
+local Window = WindUI:CreateWindow({
+    Title = "KyZen Hub",
+    Icon = "rbxassetid://10709791437",
+    Author = "kyzen868",
+    Folder = "KyZenHub",
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 200,
+    HasOutline = true
+})
+
+-- Membuat Semua Tab / Menu
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+local PlayerTab = Window:Tab({ Title = "PLAYER", Icon = "user" })
+local VisualTab = Window:Tab({ Title = "Visual", Icon = "eye" })
+local EspTab = Window:Tab({ Title = "Esp", Icon = "target" })
+local TeleportTab = Window:Tab({ Title = "Teleport", Icon = "map-pin" })
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "sword" })
+local MovemendTab = Window:Tab({ Title = "Movemend", Icon = "activity" })
+local CframeTab = Window:Tab({ Title = "Cframe", Icon = "box" })
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+local TrollFETab = Window:Tab({ Title = "Troll FE", Icon = "smile" })
+local UntylitTab = Window:Tab({ Title = "Untylit", Icon = "tool" })
+local SettingTab = Window:Tab({ Title = "Setting", Icon = "settings" })
+
+-- Fungsi Helper untuk Membuat Kotak Search & Laci Pengaturan di Setiap Menu
+local function setupTabMenu(tab, tabName)
+    -- Fitur Search di dalam Tab
+    tab:Input({
+        Title = "Cari di " .. tabName,
+        Icon = "search",
+        Placeholder = "Ketik fitur...",
+        Value = "",
+        Callback = function(v)
+            local query = string.lower(v)
+            if query ~= "" then
+                WindUI:Notify({
+                    Title = "Pencarian (" .. tabName .. ")",
+                    Content = "Mencari: " .. v,
+                    Duration = 2
+                })
+            end
+        end
+    })
+
+    -- Laci Pengaturan (Collapsible Folder) yang bisa dilipat/dibuka
+    local settingsDrawer = tab:Folder({
+        Title = "Laci Pengaturan " .. tabName,
+        Opened = false -- Status awal tertutup (dilipat) seperti laci
+    })
+
+    settingsDrawer:Paragraph({
+        Title = "Informasi Laci",
+        Desc = "Fitur-fitur " .. tabName .. " tersimpan di dalam laci ini. Klik untuk melipat atau membukanya kembali."
+    })
+
+    settingsDrawer:Button({
+        Title = "Contoh Tombol Fitur",
+        Desc = "Tombol uji coba di dalam laci",
+        Callback = function()
+            WindUI:Notify({
+                Title = tabName,
+                Content = "Fitur di dalam laci berhasil diaktifkan!",
+                Duration = 2
+            })
+        end
+    })
+end
+
+-- ==========================================
+-- 1. TAB HOME (Lengkap dengan Fitur & Search)
+-- ==========================================
+HomeTab:Input({
+    Title = "Search",
+    Icon = "search",
+    Placeholder = "Cari fitur...",
+    Value = "",
+    Callback = function(v)
+        local query = string.lower(v)
+        if query ~= "" then
+            WindUI:Notify({ Title = "Pencarian Home", Content = "Mencari: " .. v, Duration = 2 })
+        end
+    end
+})
+
+HomeTab:Section({ Title = "User & Performance Info" })
+
+HomeTab:Paragraph({
+    Title = "Player & System Status",
+    Desc = string.format("Username: %s\nDisplayName: %s\nUser ID: %d\nExecutor: %s", 
+        LocalPlayer.Name, 
+        LocalPlayer.DisplayName, 
+        LocalPlayer.UserId, 
+        executorName
+    )
+})
+
+local StatsParagraph = HomeTab:Paragraph({
+    Title = "Live Counter",
+    Desc = "FPS: Calculating...\nPing: Calculating...\nServer Time: Calculating..."
+})
+
+-- Loop Counter untuk FPS, Ping, dan Waktu
+task.spawn(function()
+    local lastTick = tick()
+    local frameCount = 0
+    local fps = 0
+
+    RunService.RenderStepped:Connect(function()
+        frameCount = frameCount + 1
+        if tick() - lastTick >= 1 then
+            fps = frameCount
+            frameCount = 0
+            lastTick = tick()
+        end
+    end)
+
+    while task.wait(1) do
+        local pingVal = 0
+        pcall(function()
+            if LocalPlayer.GetNetworkPing then
+                pingVal = math.floor(LocalPlayer:GetNetworkPing() * 1000)
+            end
+        end)
+        local serverTime = os.date("%I:%M:%S %p")
+
+        pcall(function()
+            StatsParagraph:SetDesc(string.format("FPS: %d\nPing: %d ms\nServer Time: %s", fps, pingVal, serverTime))
+        end)
+    end
+end)
+
+HomeTab:Section({ Title = "Server Control" })
+
+HomeTab:Button({
+    Title = "Rejoin Server",
+    Desc = "Bergabung kembali ke server saat ini",
+    Callback = function()
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+        end)
+    end
+})
+
+HomeTab:Button({
+    Title = "Server Hop",
+    Desc = "Pindah ke server publik lain secara acak",
+    Callback = function()
+        task.spawn(function()
+            local successReq, req = pcall(function()
+                return game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")
+            end)
+            
+            if successReq and req then
+                local successDec, body = pcall(function()
+                    return HttpService:JSONDecode(req)
+                end)
+                
+                if successDec and body and body.data then
+                    local servers = {}
+                    for _, s in ipairs(body.data) do
+                        if s.id ~= game.JobId and s.playing < s.maxPlayers then
+                            table.insert(servers, s.id)
+                        end
+                    end
+                    
+                    if #servers > 0 then
+                        TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer)
+                        return
+                    end
+                end
+            end
+            WindUI:Notify({ Title = "Gagal", Content = "Tidak ada server lain yang ditemukan!", Duration = 3 })
+        end)
+    end
+})
+
+HomeTab:Button({
+    Title = "Hop Low Player",
+    Desc = "Pindah ke server dengan jumlah pemain paling sedikit",
+    Callback = function()
+        task.spawn(function()
+            local targetServer = nil
+            local minPlayers = math.huge
+            local successReq, req = pcall(function()
+                return game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")
+            end)
+            
+            if successReq and req then
+                local successDec, body = pcall(function()
+                    return HttpService:JSONDecode(req)
+                end)
+                
+                if successDec and body and body.data then
+                    for _, s in ipairs(body.data) do
+                        if s.id ~= game.JobId and s.playing < minPlayers then
+                            minPlayers = s.playing
+                            targetServer = s.id
+                        end
+                    end
+                end
+            end
+            
+            if targetServer then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, LocalPlayer)
+            else
+                WindUI:Notify({ Title = "Gagal", Content = "Tidak dapat menemukan server sepi!", Duration = 3 })
+            end
+        end)
+    end
+})
+
+HomeTab:Button({
+    Title = "Copy JobId",
+    Desc = "Menyalin JobId server saat ini ke clipboard",
+    Callback = function()
+        local copyFunc = setclipboard or toclipboard or (Clipboard and Clipboard.set)
+        if copyFunc then
+            copyFunc(game.JobId)
+            WindUI:Notify({ Title = "Berhasil", Content = "JobId berhasil disalin!", Duration = 3 })
+        else
+            WindUI:Notify({ Title = "Gagal", Content = "Executor tidak mendukung fungsi clipboard!", Duration = 3 })
+        end
+    end
+})
+
+HomeTab:Section({ Title = "Community Links" })
+
+HomeTab:Button({
+    Title = "TikTok: @kyzen868",
+    Desc = "Salin link TikTok",
+    Callback = function()
+        local copyFunc = setclipboard or toclipboard or (Clipboard and Clipboard.set)
+        if copyFunc then
+            copyFunc("https://tiktok.com/@kyzen868")
+            WindUI:Notify({ Title = "Berhasil", Content = "Link TikTok disalin ke clipboard!", Duration = 3 })
+        end
+    end
+})
+
+HomeTab:Button({
+    Title = "WhatsApp Channel",
+    Desc = "Salin link Saluran WhatsApp KyZen HUB",
+    Callback = function()
+        local copyFunc = setclipboard or toclipboard or (Clipboard and Clipboard.set)
+        if copyFunc then
+            copyFunc("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J")
+            WindUI:Notify({ Title = "Berhasil", Content = "Link Saluran WA disalin ke clipboard!", Duration = 3 })
+        end
+    end
+})
+
+
+-- ==========================================
+-- 2. SETUP MENU LAINNYA (Search + Laci)
+-- ==========================================
+setupTabMenu(PlayerTab, "PLAYER")
+setupTabMenu(VisualTab, "Visual")
+setupTabMenu(EspTab, "Esp")
+setupTabMenu(TeleportTab, "Teleport")
+setupTabMenu(CombatTab, "Combat")
+setupTabMenu(MovemendTab, "Movemend")
+setupTabMenu(CframeTab, "Cframe")
+setupTabMenu(WorldTab, "World")
+setupTabMenu(TrollFETab, "Troll FE")
+setupTabMenu(UntylitTab, "Untylit")
+setupTabMenu(SettingTab, "Setting")
+
+-- Notifikasi Sukses
+WindUI:Notify({
+    Title = "KyZen Hub Loaded",
+    Content = "Selamat datang, " .. LocalPlayer.Name .. "!",
+    Duration = 4
+})
