@@ -1,0 +1,390 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "KyZen | IS BACK",
+    Author = "",
+    Size = UDim2.fromOffset(580, 360),
+    Theme = "Dark",
+    Transparent = true,
+    HideSearchBar = false,
+})
+
+-- Membuat Tab Menu
+local HomeTab = Window:Tab({ Title = "HOME", Icon = "home" })
+local PlayerTab = Window:Tab({ Title = "PLAYER", Icon = "user" })
+local VisualTab = Window:Tab({ Title = "VISUAL", Icon = "eye" })
+local CombatTab = Window:Tab({ Title = "COMBAT", Icon = "swords" })
+local MovementTab = Window:Tab({ Title = "MOVEMENT", Icon = "footprints" })
+local TeleportTab = Window:Tab({ Title = "TELEPORT", Icon = "map-pin" })
+local WorldTab = Window:Tab({ Title = "WORLD", Icon = "globe" })
+local UtilityTab = Window:Tab({ Title = "UTILITY", Icon = "wrench" })
+local ConfigTab = Window:Tab({ Title = "CONFIG", Icon = "sliders" })
+local SettingTab = Window:Tab({ Title = "SETTING", Icon = "settings" })
+
+--------------------------------------------------------------------------------
+-- MENU HOME
+--------------------------------------------------------------------------------
+local gameLink = "https://www.roblox.com/games/" .. tostring(game.PlaceId)
+
+HomeTab:Button({
+    Title = "📋 Link Game",
+    Callback = function()
+        if setclipboard then
+            setclipboard(gameLink)
+            WindUI:Notify({ Title = "Berhasil Disalin!", Content = "Link game telah disalin.", Duration = 3 })
+        end
+    end
+})
+
+HomeTab:Paragraph({
+    Title = "🌐 Tautan Komunitas",
+    Content = "Silakan pilih tombol di bawah untuk menyalin tautan."
+})
+
+HomeTab:Button({
+    Title = "🎵 TikTok",
+    Desc = "tiktok.com/@kyzen868",
+    Callback = function()
+        if setclipboard then
+            setclipboard("https://tiktok.com/@kyzen868")
+            WindUI:Notify({ Title = "Berhasil Disalin!", Content = "Link TikTok berhasil disalin.", Duration = 3 })
+        end
+    end
+})
+
+HomeTab:Button({
+    Title = "💬 Saluran WA",
+    Desc = "Ikuti Saluran KyZen HUB",
+    Callback = function()
+        if setclipboard then
+            setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J")
+            WindUI:Notify({ Title = "Berhasil Disalin!", Content = "Link Saluran WhatsApp berhasil disalin.", Duration = 3 })
+        end
+    end
+})
+
+--------------------------------------------------------------------------------
+-- MENU PLAYER
+--------------------------------------------------------------------------------
+
+PlayerTab:Section({ Title = "Fly V5 - Kamera System" })
+
+local plr = game.Players.LocalPlayer
+local rs = game:GetService("RunService")
+local bv,bg,conn
+local flySpeed = 35
+
+local function StartFly(speed)
+    -- FLY NO TOLERANSI (AUTO KICK JIKA > 500)
+    if speed > 500 then
+        plr:Kick("\n\n🛡️ [KYZEN HUB - SECURITY] 🗿\n\nWoy kebanyakan gaya lu!\nLimit cuma 500, lu ketik "..speed.."\n\nJangan ngotak-ngatik, nanti meledak HP lu!\n\nAuto kick by Kyzen System")
+        return
+    end
+    
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
+    local cam = workspace.CurrentCamera
+    hum.PlatformStand = true
+
+    bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+    bv.Velocity = Vector3.new(0,0,0)
+    bv.Parent = hrp
+
+    bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
+    bg.D = 15
+    bg.P = 5000
+    bg.Parent = hrp
+
+    conn = rs.Heartbeat:Connect(function()
+        if hrp.Anchored then hrp.Anchored = false end
+        local move = hum.MoveDirection 
+        local camCF = cam.CFrame
+
+        if move.Magnitude > 0.01 then 
+            local vel = (camCF.LookVector * move.Z + camCF.RightVector * move.X) * speed
+            if move.Z < 0 then
+                vel = (camCF.LookVector * -move.Z + camCF.RightVector * move.X) * speed
+            else
+                vel = (camCF.LookVector * -move.Z + camCF.RightVector * move.X) * speed * 0.7
+            end
+            bv.Velocity = bv.Velocity:Lerp(vel, 0.35)
+        else
+            bv.Velocity = bv.Velocity:Lerp(Vector3.new(0,0,0), 0.25)
+        end
+        bg.CFrame = bg.CFrame:Lerp(camCF, 0.35)
+    end)
+end
+
+local function StopFly()
+    local char = plr.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.PlatformStand = false end
+        for _,v in pairs(char.HumanoidRootPart:GetChildren()) do
+            if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then v:Destroy() end
+        end
+    end
+    if conn then conn:Disconnect() end
+end
+
+PlayerTab:Input({
+    Title = "Speed Fly [Ketik / Max 500 - No Toleransi]", 
+    Default = "35", 
+    Callback = function(v) 
+        local n = tonumber(v) 
+        if n then 
+            if n > 500 then
+                plr:Kick("\n\n🛡️ [KYZEN HUB - SECURITY] 🗿\n\nWoy kebanyakan gaya lu!\nLimit cuma 500, lu ketik "..n.."\n\nJangan ngotak-ngatik, nanti meledak HP lu!\n\nAuto kick by Kyzen System")
+                return
+            else
+                flySpeed = n 
+            end
+        end 
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Fly Kamera V5 - Fix Analog [ON/OFF]",
+    Desc = "Analog licin, W + atas = naik",
+    Callback = function(v) 
+        if v then StartFly(flySpeed) else StopFly() end 
+    end
+})
+
+PlayerTab:Section({ Title = "Fitur Tambahan Pemain" })
+
+-- 1. No Clip
+local noclipEnabled = false
+PlayerTab:Toggle({
+    Title = "No Clip [ON/OFF]",
+    Callback = function(v) noclipEnabled = v end
+})
+rs.Stepped:Connect(function()
+    if noclipEnabled then
+        local char = plr.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- 2. Rainbow Air Platform
+local rainbowPlatform = false
+local plat = nil
+PlayerTab:Toggle({
+    Title = "Rainbow Air Platform [ON/OFF]",
+    Callback = function(v)
+        rainbowPlatform = v
+        if v then
+            plat = Instance.new("Part")
+            plat.Size = Vector3.new(5, 1, 5)
+            plat.Anchored = true
+            plat.Parent = workspace
+            task.spawn(function()
+                while rainbowPlatform do
+                    for hue = 0, 1, 0.01 do
+                        if not rainbowPlatform then break end
+                        plat.Color = Color3.fromHSV(hue, 1, 1)
+                        local char = plr.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            plat.CFrame = char.HumanoidRootPart.CFrame - Vector3.new(0, 3.5, 0)
+                        end
+                        task.wait(0.05)
+                    end
+                end
+            end)
+        else
+            if plat then plat:Destroy() plat = nil end
+        end
+    end
+})
+
+-- 3. Bunny Hop (Terus melompat tanpa harus menyentuh tanah/objek)
+local bhopping = false
+PlayerTab:Toggle({
+    Title = "Bunny Hop (Terus Lompat) [ON/OFF]",
+    Callback = function(v) bhopping = v end
+})
+rs.Heartbeat:Connect(function()
+    if bhopping then
+        local char = plr.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+})
+
+-- 4. Long Jump (Ditingkatkan kekuatannya)
+local longJump = false
+PlayerTab:Toggle({
+    Title = "Long Jump [ON/OFF]",
+    Callback = function(v) longJump = v end
+})
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if longJump then
+        local char = plr.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.Velocity = char.HumanoidRootPart.Velocity + (char.HumanoidRootPart.CFrame.LookVector * 120) + Vector3.new(0, 60, 0)
+        end
+    end
+})
+
+-- 5. Anti Void (Simpan Posisi Tempat Aman Terakhir + Teleport Balik)
+local antiVoidEnabled = false
+local lastSafePos = nil
+PlayerTab:Toggle({
+    Title = "Anti Void [ON/OFF]",
+    Callback = function(v) antiVoidEnabled = v end
+})
+rs.Heartbeat:Connect(function()
+    local char = plr.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local hum = char:FindFirstChild("Humanoid")
+        
+        if hum and hum.FloorMaterial ~= Enum.Material.Air then
+            lastSafePos = hrp.CFrame
+        end
+
+        if antiVoidEnabled and hrp.Position.Y < -50 then
+            if lastSafePos then
+                hrp.CFrame = lastSafePos
+            else
+                hrp.CFrame = CFrame.new(hrp.Position.X, 50, hrp.Position.Z)
+            end
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        end
+    end
+end)
+
+-- 6. Shift Lock
+PlayerTab:Button({
+    Title = "Shift Lock",
+    Desc = "Mengaktifkan fitur Shift Lock Roblox",
+    Callback = function()
+        plr.DevEnableMouseLock = true
+        WindUI:Notify({ Title = "Shift Lock Aktif", Content = "Tekan tombol Shift di keyboard atau ikon Shift Lock.", Duration = 3 })
+    end
+})
+
+--------------------------------------------------------------------------------
+-- MENU MOVEMENT (JUMP POWER, SWIM SPEED, CFRAME SPEED, & WALK SPEED)
+--------------------------------------------------------------------------------
+
+-- Jump Power (Proteksi kick > 350)
+MovementTab:Input({
+    Title = "Jump Power [Max 350]",
+    Value = "50",
+    Callback = function(v)
+        local n = tonumber(v)
+        if not n then return end
+        if n > 350 then
+            game.Players.LocalPlayer:Kick("\n\n🛡️ [KYZEN HUB - SECURITY] 🗿\n\nWoy kebanyakan gaya lu!\nJump Power Limit cuma 350, lu ketik "..n.."\n\nJangan ngotak-ngatik, nanti meledak HP lu!\n\nAuto kick by Kyzen System")
+            return
+        end
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.UseJumpPower = true
+            hum.JumpPower = n
+        end
+    end
+})
+
+-- Swim Speed (Proteksi kick > 150)
+MovementTab:Input({
+    Title = "Swim Speed [Max 150]",
+    Value = "16",
+    Callback = function(v)
+        local n = tonumber(v)
+        if not n then return end
+        if n > 150 then
+            game.Players.LocalPlayer:Kick("\n\n🛡️ [KYZEN HUB - SECURITY] 🗿\n\nWoy kebanyakan gaya lu!\nSwim Speed Limit cuma 150, lu ketik "..n.."\n\nJangan ngotak-ngatik, nanti meledak HP lu!\n\nAuto kick by Kyzen System")
+            return
+        end
+        if game.Players.LocalPlayer.Character then
+            game.Players.LocalPlayer.Character.Humanoid:SetAttribute("SwimSpeed", n)
+            getgenv().SwimSpeedValue = n
+        end
+    end
+})
+
+-- Eksekusi Custom Swim Speed Value
+rs.Stepped:Connect(function()
+    local char = plr.Character
+    if char and char:FindFirstChild("Humanoid") then
+        local hum = char.Humanoid
+        if hum:GetState() == Enum.HumanoidStateType.Swimming then
+            local speed = getgenv().SwimSpeedValue or 16
+            hum.WalkSpeed = speed
+        end
+    end
+end)
+
+-- CFrame Speed (Proteksi kick > 10)
+MovementTab:Input({
+    Title = "CFrame Speed [Max 10]",
+    Value = "1",
+    Callback = function(v)
+        local n = tonumber(v)
+        if not n then return end
+        if n > 10 then
+            game.Players.LocalPlayer:Kick("\n\n🛡️ [KYZEN HUB - SECURITY] 🗿\n\nWoy kebanyakan gaya lu!\nCFrame Speed Limit cuma 10, lu ketik "..n.."\n\nJangan ngotak-ngatik, nanti meledak HP lu!\n\nAuto kick by Kyzen System")
+            return
+        end
+        getgenv().CFrameSpeed = n
+    end
+})
+
+-- Eksekusi CFrame Speed Value
+rs.RenderStepped:Connect(function(dt)
+    local cfSpeed = getgenv().CFrameSpeed or 1
+    if cfSpeed > 1 then
+        local char = plr.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+            local hum = char.Humanoid
+            if hum.MoveDirection.Magnitude > 0 then
+                char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + (hum.MoveDirection * cfSpeed * dt * 50)
+            end
+        end
+    end
+end)
+
+-- Walk Speed (Kode baru sesuai permintaan Anda dengan proteksi kick > 500)
+MovementTab:Input({
+    Title = "Walk Speed [Max 500]",
+    Value = "16",
+    Callback = function(v)
+        local n = tonumber(v)
+        if not n then return end
+        if n > 500 then
+            game.Players.LocalPlayer:Kick("\n\n🛡️ [KYZEN HUB - SECURITY] 🗿\n\nWoy kebanyakan gaya lu!\nWalk Speed Limit cuma 500, lu ketik "..n.."\n\nJangan ngotak-ngatik, nanti meledak HP lu!\n\nAuto kick by Kyzen System")
+            return
+        end
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = n end
+        getgenv().WalkSpeedValue = n
+    end
+})
+
+-- Eksekusi Loop Walk Speed (Agar tetap aktif jika respawn)
+rs.Stepped:Connect(function()
+    if getgenv().WalkSpeedValue then
+        local char = plr.Character
+        if char and char:FindFirstChild("Humanoid") then
+            if char.Humanoid.WalkSpeed ~= getgenv().WalkSpeedValue then
+                char.Humanoid.WalkSpeed = getgenv().WalkSpeedValue
+            end
+        end
+    end
+end)
+
+-- Pilih tab pertama saat pertama kali dibuka
+Window:SelectTab(1)
