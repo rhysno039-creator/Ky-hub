@@ -1,0 +1,799 @@
+-- Memuat WindUI Library dengan Error Handling yang Aman
+local Success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/refs/heads/main/main.lua"))()
+end)
+
+if not Success or not WindUI then
+    Success, WindUI = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+    end)
+end
+
+if not Success or not WindUI then
+    warn("Failed to load WindUI Library!")
+    return
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local Stats = game:GetService("Stats")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local ExecutorName = "Executor"
+pcall(function()
+    if identifyexecutor then
+        ExecutorName = identifyexecutor()
+    end
+end)
+
+-- ==================== FLOATING BAR (TOP LEFT) ====================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KyZenFloatingBar"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local BarFrame = Instance.new("Frame")
+BarFrame.Name = "BarFrame"
+BarFrame.Size = UDim2.new(0, 260, 0, 32)
+BarFrame.Position = UDim2.new(0, 20, 0, 15)
+BarFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+BarFrame.BackgroundTransparency = 0.3
+BarFrame.BorderSizePixel = 0
+BarFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 16)
+UICorner.Parent = BarFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(150, 80, 255)
+UIStroke.Thickness = 1.5
+UIStroke.Parent = BarFrame
+
+local BarText = Instance.new("TextLabel")
+BarText.Name = "BarText"
+BarText.Size = UDim2.new(1, 0, 1, 0)
+BarText.BackgroundTransparency = 1
+BarText.Font = Enum.Font.GothamBold
+BarText.TextColor3 = Color3.fromRGB(255, 255, 255)
+BarText.TextSize = 12
+BarText.Text = "kyy ⚡ KyZen HUB 🌐 " .. ExecutorName
+BarText.Parent = BarFrame
+
+task.spawn(function()
+    while ScreenGui and ScreenGui.Parent and task.wait(1) do
+        pcall(function()
+            local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            local timeStr = os.date("%H:%M:%S")
+            BarText.Text = "kyy ⚡ KyZen 🌐 " .. ExecutorName .. " ⏱️ " .. ping .. "ms 🕒 " .. timeStr
+        end)
+    end
+end)
+
+-- Window Utama WindUI
+local Window = WindUI:CreateWindow({
+    Title = "KyZen HUB",
+    Icon = "",
+    Author = "kyzen868", 
+    Folder = "KyZenHubConfig",
+    Size = UDim2.fromOffset(600, 480),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 150,
+    HasOutline = true
+})
+
+local function getPlayerNames()
+    local list = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            table.insert(list, p.Name)
+        end
+    end
+    if #list == 0 then table.insert(list, "No players available") end
+    return list
+end
+
+-- ==================== TAB 1: HOME ====================
+local HomeTab = Window:Tab({ Title = "Home", Icon = "home" })
+HomeTab:Section({ Title = "Welcome Section" })
+HomeTab:Paragraph({ Title = "Welcome, " .. LocalPlayer.Name .. " 👋", Desc = "• Executor: " .. ExecutorName })
+
+HomeTab:Section({ Title = "Social Media Links" })
+HomeTab:Button({
+    Title = "Copy WhatsApp Channel",
+    Callback = function()
+        pcall(function() setclipboard("https://whatsapp.com/channel/0029VbDTYKY9cDDhMKZB3H0J") end)
+        WindUI:Notify({ Title = "Success", Content = "WhatsApp link copied to clipboard.", Duration = 3 })
+    end
+})
+HomeTab:Button({
+    Title = "Copy TikTok Username",
+    Callback = function()
+        pcall(function() setclipboard("kyzen868") end)
+        WindUI:Notify({ Title = "Success", Content = "TikTok username copied.", Duration = 3 })
+    end
+})
+
+HomeTab:Section({ Title = "Changelog" })
+HomeTab:Paragraph({ Title = "Update v22.0", Desc = "• Box ESP now displays Name & Distance correctly.\n• Kept Spectate, Rainbow Health, Adjustable FullBright, & Dynamic Player List." })
+
+HomeTab:Section({ Title = "System Action" })
+HomeTab:Button({
+    Title = "Unload HUB",
+    Callback = function() 
+        pcall(function() ScreenGui:Destroy() end)
+        pcall(function() Window:Destroy() end)
+    end
+})
+
+-- ==================== TAB 2: PLAYER ====================
+local flyToggled = false
+local flySpeed = 50
+local bodyVelocity, bodyGyro
+local noclipEnabled = false
+local bunnyHopEnabled = false
+local infJumpEnabled = false
+local antiAfkEnabled = false
+local antiRejoinEnabled = false
+local antiKickEnabled = false
+
+local runTabEnabled = false
+local customRunSpeed = 24
+local jumpPowerEnabled = false
+local customJumpPower = 50
+local dashSpeedEnabled = false
+local dashSpeedVal = 30
+
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
+
+PlayerTab:Section({ Title = "Movement Control" })
+PlayerTab:Toggle({
+    Title = "Fly Mode", Default = false, 
+    Callback = function(V) 
+        flyToggled = V
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if flyToggled and hrp and hum then
+            hum.PlatformStand = true
+            bodyVelocity = Instance.new("BodyVelocity", hrp)
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyGyro = Instance.new("BodyGyro", hrp)
+            bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            bodyGyro.P = 20000
+            bodyGyro.CFrame = Camera.CFrame
+        else
+            if hum then hum.PlatformStand = false end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end
+})
+PlayerTab:Input({
+    Title = "Fly Speed Value", Default = "50", Placeholder = "Enter speed...", 
+    Callback = function(val) local num = tonumber(val) if num then flySpeed = num end end
+})
+
+PlayerTab:Toggle({
+    Title = "Enable Custom Walk Speed", Default = false,
+    Callback = function(state)
+        runTabEnabled = state
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = state and customRunSpeed or 16 end
+    end
+})
+PlayerTab:Input({
+    Title = "Set Walk Speed Value", Default = "24", Placeholder = "Enter speed number...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then customRunSpeed = num end
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Custom Jump Power", Default = false,
+    Callback = function(state)
+        jumpPowerEnabled = state
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.UseJumpPower = state hum.JumpPower = state and customJumpPower or 50 end
+    end
+})
+PlayerTab:Input({
+    Title = "Set Jump Power Value", Default = "50", Placeholder = "Enter jump power...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then customJumpPower = num end
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Enable Dash Speed Boost", Default = false,
+    Callback = function(state) dashSpeedEnabled = state end
+})
+PlayerTab:Input({
+    Title = "Dash Speed Value", Default = "30", Placeholder = "Dash value...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then dashSpeedVal = num end
+    end
+})
+
+PlayerTab:Toggle({ 
+    Title = "Noclip", Default = false, 
+    Callback = function(state) 
+        noclipEnabled = state 
+        if not state then
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = true end
+                end
+            end
+        end
+    end 
+})
+
+PlayerTab:Toggle({ Title = "Bunny Hop", Default = false, Callback = function(state) bunnyHopEnabled = state end })
+PlayerTab:Toggle({ Title = "Infinite Jump", Default = false, Callback = function(state) infJumpEnabled = state end })
+
+PlayerTab:Section({ Title = "Safety & Character" })
+PlayerTab:Button({
+    Title = "Respawn Character",
+    Callback = function()
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.Health = 0
+                WindUI:Notify({ Title = "Player", Content = "Character respawned!", Duration = 2 })
+            end
+        end)
+    end
+})
+PlayerTab:Toggle({ Title = "Anti Rejoin", Default = false, Callback = function(state) antiRejoinEnabled = state end })
+PlayerTab:Toggle({ Title = "Anti Kick", Default = false, Callback = function(state) antiKickEnabled = state end })
+PlayerTab:Toggle({ Title = "Anti AFK", Default = false, Callback = function(state) antiAfkEnabled = state end })
+
+-- ==================== TAB 3: TELEPORT & SPECTATE ====================
+local selectedTargetTP = nil
+local tpOffsetValue = 3
+local runTeleportSpeed = 50 
+local spectatingPlayer = nil
+
+local savedCoordsInstan = {nil, nil, nil, nil, nil}
+local savedCoordsRun = {nil, nil, nil, nil, nil}
+
+local TeleportTab = Window:Tab({ Title = "Teleport", Icon = "navigation" })
+
+TeleportTab:Section({ Title = "Player Utility (Spectate & Teleport)" })
+
+local playerDropdown = TeleportTab:Dropdown({
+    Title = "Select Target Player",
+    Values = getPlayerNames(),
+    Callback = function(val) selectedTargetTP = val end
+})
+
+Players.PlayerAdded:Connect(function()
+    pcall(function() playerDropdown:Refresh(getPlayerNames()) end)
+end)
+Players.PlayerRemoving:Connect(function()
+    pcall(function() playerDropdown:Refresh(getPlayerNames()) end)
+end)
+
+TeleportTab:Button({
+    Title = "Teleport to Selected Player",
+    Callback = function()
+        if selectedTargetTP and selectedTargetTP ~= "No players available" then
+            local targetPlayer = Players:FindFirstChild(selectedTargetTP)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myHrp then
+                    myHrp.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, tpOffsetValue, 0)
+                    WindUI:Notify({ Title = "Teleport", Content = "Successfully teleported to " .. selectedTargetTP, Duration = 2 })
+                end
+            end
+        end
+    end
+})
+
+TeleportTab:Toggle({
+    Title = "Spectate Selected Player", Default = false,
+    Callback = function(state)
+        if state then
+            if selectedTargetTP and selectedTargetTP ~= "No players available" then
+                spectatingPlayer = Players:FindFirstChild(selectedTargetTP)
+                if spectatingPlayer then
+                    Camera.CameraSubject = spectatingPlayer.Character and spectatingPlayer.Character:FindFirstChild("Humanoid")
+                    WindUI:Notify({ Title = "Spectate", Content = "Spectating " .. selectedTargetTP, Duration = 2 })
+                end
+            else
+                WindUI:Notify({ Title = "Spectate", Content = "Please select a valid player first!", Duration = 2 })
+            end
+        else
+            spectatingPlayer = nil
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = LocalPlayer.Character.Humanoid
+            end
+            WindUI:Notify({ Title = "Spectate", Content = "Stopped spectating.", Duration = 2 })
+        end
+    end
+})
+
+TeleportTab:Section({ Title = "Teleport Instan (Saved)" })
+for i = 1, 5 do
+    TeleportTab:Button({
+        Title = i .. " - Save | Teleport",
+        Callback = function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if not savedCoordsInstan[i] then
+                    savedCoordsInstan[i] = hrp.CFrame
+                    WindUI:Notify({ Title = "Teleport Instan", Content = "Position " .. i .. " Saved!", Duration = 2 })
+                else
+                    hrp.CFrame = savedCoordsInstan[i]
+                    WindUI:Notify({ Title = "Teleport Instan", Content = "Teleported to Position " .. i, Duration = 2 })
+                end
+            end
+        end
+    })
+end
+
+TeleportTab:Section({ Title = "Teleport RUN (Saved)" })
+TeleportTab:Input({
+    Title = "Run Speed Control", Default = "50", Placeholder = "Enter run teleport speed...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then runTeleportSpeed = num end
+    end
+})
+
+for i = 1, 5 do
+    TeleportTab:Button({
+        Title = i .. " - Save | Run",
+        Callback = function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if not savedCoordsRun[i] then
+                    savedCoordsRun[i] = hrp.CFrame
+                    WindUI:Notify({ Title = "Teleport RUN", Content = "Run Position " .. i .. " Saved!", Duration = 2 })
+                else
+                    local targetCFrame = savedCoordsRun[i]
+                    local startPos = hrp.Position
+                    local endPos = targetCFrame.Position
+                    local distance = (endPos - startPos).Magnitude
+                    local duration = distance / math.max(runTeleportSpeed, 1)
+                    local startTime = tick()
+                    
+                    task.spawn(function()
+                        while tick() - startTime < duration do
+                            local alpha = (tick() - startTime) / duration
+                            if hrp and hrp.Parent then
+                                hrp.CFrame = CFrame.new(startPos:Lerp(endPos, alpha))
+                            else
+                                break
+                            end
+                            task.wait()
+                        end
+                        if hrp and hrp.Parent then
+                            hrp.CFrame = targetCFrame
+                        end
+                    end)
+                    WindUI:Notify({ Title = "Teleport RUN", Content = "Running to Position " .. i, Duration = 2 })
+                end
+            end
+        end
+    })
+end
+
+-- ==================== TAB 4: VISUAL / ESP ====================
+local VisualTab = Window:Tab({ Title = "Visual", Icon = "eye" })
+local hitboxEnabled = false
+local hitboxSizeValue = 5 
+local espEnabled = false
+local healthEspEnabled = false
+local chamsEspEnabled = false
+local fullBrightEnabled = false
+local brightLevelValue = 2 
+local fovEnabled = false
+local fovValue = 70
+
+local rainbowTracersEnabled = false
+local rainbowSkeletonEnabled = false
+local tracersList = {}
+local healthGuiList = {}
+local espGuiList = {}
+
+local function removeTracers()
+    for _, line in pairs(tracersList) do
+        pcall(function() line:Remove() end)
+    end
+    tracersList = {}
+end
+
+local function clearHealthGuis()
+    for _, gui in pairs(healthGuiList) do
+        pcall(function() gui:Destroy() end)
+    end
+    healthGuiList = {}
+end
+
+local function clearEspGuis()
+    for _, gui in pairs(espGuiList) do
+        pcall(function() gui:Destroy() end)
+    end
+    espGuiList = {}
+end
+
+VisualTab:Section({ Title = "ESP & Effects" })
+VisualTab:Toggle({ Title = "Rainbow Tracers", Default = false, Callback = function(state) rainbowTracersEnabled = state if not state then removeTracers() end end })
+VisualTab:Toggle({ Title = "Rainbow Skeleton ESP", Default = false, Callback = function(state) rainbowSkeletonEnabled = state end })
+
+VisualTab:Section({ Title = "Hitbox Expander & Box ESP" })
+VisualTab:Toggle({
+    Title = "Hitbox Expander (Rainbow)", Default = false,
+    Callback = function(state)
+        hitboxEnabled = state
+        if not state then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                    hrp.CanCollide = true
+                end
+            end
+        end
+    end
+})
+VisualTab:Input({
+    Title = "Hitbox Size Value", Default = "5", Placeholder = "Enter size...",
+    Callback = function(value) local num = tonumber(value) if num then hitboxSizeValue = num end end
+})
+
+VisualTab:Toggle({
+    Title = "ESP Box (With Name & Distance)", Default = false, 
+    Callback = function(state) 
+        espEnabled = state 
+        if not state then clearEspGuis() end
+    end
+})
+
+VisualTab:Toggle({
+    Title = "Rainbow Health ESP", Default = false, 
+    Callback = function(state) 
+        healthEspEnabled = state 
+        if not state then clearHealthGuis() end
+    end
+})
+VisualTab:Toggle({Title = "Chams ESP", Default = false, Callback = function(state) chamsEspEnabled = state end})
+
+VisualTab:Section({ Title = "Environment & Camera FOV" })
+VisualTab:Toggle({
+    Title = "Full Brightness", Default = false,
+    Callback = function(state)
+        fullBrightEnabled = state
+        if not state then Lighting.Brightness = 1 Lighting.GlobalShadows = true end
+    end
+})
+VisualTab:Input({
+    Title = "Full Brightness Level", Default = "2", Placeholder = "Enter brightness value (e.g. 2, 5, 10)...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then brightLevelValue = num end
+    end
+})
+VisualTab:Toggle({
+    Title = "Field of View (FOV)", Default = false,
+    Callback = function(state) fovEnabled = state if not state then Camera.FieldOfView = 70 end end
+})
+VisualTab:Input({
+    Title = "FOV Number Value", Default = "70", Placeholder = "Enter FOV...",
+    Callback = function(val) local num = tonumber(val) if num then fovValue = num end end
+})
+
+-- ==================== TAB 5: WORLD & PERFORMANCE ====================
+local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
+WorldTab:Section({ Title = "Performance & Environment" })
+
+WorldTab:Button({
+    Title = "FPS Boost",
+    Callback = function()
+        pcall(function()
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") then v.Enabled = false end
+            end
+            Lighting.GlobalShadows = false
+            WindUI:Notify({ Title = "FPS Boost", Content = "Performance optimized successfully!", Duration = 3 })
+        end)
+    end
+})
+WorldTab:Button({
+    Title = "Server Hop",
+    Callback = function()
+        pcall(function()
+            local servers = {}
+            local req = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+            if req and req.data then
+                for _, s in pairs(req.data) do
+                    if s.playing < s.maxPlayers and s.id ~= game.JobId then table.insert(servers, s.id) end
+                end
+            end
+            if #servers > 0 then TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer) end
+        end)
+    end
+})
+WorldTab:Button({ Title = "Rejoin Server", Callback = function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end })
+WorldTab:Button({ Title = "Copy JobID", Callback = function() pcall(function() setclipboard(game.JobId) end) end })
+
+-- ==================== TAB 6: TROLL ====================
+local TrollTab = Window:Tab({ Title = "Troll", Icon = "crosshair" })
+local ghostOtherEnabled = false
+local flingAllEnabled = false
+
+TrollTab:Section({ Title = "Troll Utilities" })
+TrollTab:Toggle({
+    Title = "Ghost Other Players", Default = false,
+    Callback = function(state)
+        ghostOtherEnabled = state
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                for _, part in pairs(p.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.Transparency = state and 1 or 0 end
+                end
+            end
+        end
+    end
+})
+
+TrollTab:Toggle({ 
+    Title = "Fling All Players", Default = false, 
+    Callback = function(state) flingAllEnabled = state end 
+})
+
+-- ==================== TAB 7: UTILITY ====================
+local UtilityTab = Window:Tab({ Title = "Utility", Icon = "wrench" })
+UtilityTab:Section({ Title = "External Scripts" })
+
+UtilityTab:Button({
+    Title = "Infinite Yield",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+            WindUI:Notify({ Title = "Infinite Yield", Content = "Loaded successfully!", Duration = 3 })
+        end)
+    end
+})
+
+UtilityTab:Button({
+    Title = "Dex Explorer",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+            WindUI:Notify({ Title = "Dex Explorer", Content = "Loaded successfully!", Duration = 3 })
+        end)
+    end
+})
+
+UtilityTab:Button({
+    Title = "Remote Spy",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))()
+            WindUI:Notify({ Title = "Remote Spy", Content = "Loaded successfully!", Duration = 3 })
+        end)
+    end
+})
+
+-- ==================== TAB 8: SETTINGS ====================
+local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
+SettingsTab:Section({ Title = "UI Theme Customization" })
+SettingsTab:Dropdown({
+    Title = "Select UI Theme",
+    Values = { "Dark", "Light", "Rose", "Plant", "Red", "Indigo", "Sky", "Violet", "Amber", "Emerald", "Midnight", "Crimson" },
+    Default = "Dark",
+    Callback = function(themeName)
+        pcall(function() WindUI:SetTheme(themeName) end)
+    end
+})
+
+-- ==================== RUNTIME LOOP ====================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        local tickTime = tick() * 5
+        local rainbowColor = Color3.fromHSV(tickTime % 1, 1, 1)
+
+        -- Rainbow Tracers Logic
+        if rainbowTracersEnabled and Drawing then
+            removeTracers()
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetHrp = p.Character.HumanoidRootPart
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetHrp.Position)
+                    if onScreen then
+                        local line = Drawing.new("Line")
+                        line.Visible = true
+                        line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        line.Color = rainbowColor
+                        line.Thickness = 1.5
+                        line.Transparency = 0.8
+                        table.insert(tracersList, line)
+                    end
+                end
+            end
+        end
+
+        -- Rainbow Hitbox Expander Logic
+        if hitboxEnabled then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(hitboxSizeValue, hitboxSizeValue, hitboxSizeValue)
+                    hrp.Transparency = 0.5
+                    hrp.CanCollide = false
+                    
+                    local highlight = hrp:FindFirstChild("KyZenHitboxHighlight")
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Name = "KyZenHitboxHighlight"
+                        highlight.Parent = hrp
+                    end
+                    highlight.FillColor = rainbowColor
+                    highlight.OutlineColor = rainbowColor
+                    highlight.FillTransparency = 0.4
+                end
+            end
+        end
+
+        -- Fling All Logic
+        if flingAllEnabled then
+            local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if myHrp then
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        p.Character.HumanoidRootPart.Velocity = Vector3.new(99999, 99999, 99999)
+                    end
+                end
+            end
+        end
+
+        -- ESP Box & Chams Highlights (ESP Box now includes Name & Distance via Billboard)
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local char = p.Character
+                local highlight = char:FindFirstChild("KyZenRainbowHighlight")
+                
+                if (espEnabled or chamsEspEnabled or rainbowSkeletonEnabled) then
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Name = "KyZenRainbowHighlight"
+                        highlight.Parent = char
+                    end
+                    highlight.Enabled = true
+                    highlight.FillColor = rainbowColor
+                    highlight.OutlineColor = rainbowColor
+                    highlight.FillTransparency = chamsEspEnabled and 0.5 or 1
+                    highlight.OutlineTransparency = 0
+                else
+                    if highlight then highlight:Destroy() end
+                end
+
+                -- Box ESP Info Tag (Name & Distance)
+                if espEnabled and char:FindFirstChild("Head") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local head = char.Head
+                    local billboard = head:FindFirstChild("KyZenBoxEspTag")
+                    
+                    if not billboard then
+                        billboard = Instance.new("BillboardGui")
+                        billboard.Name = "KyZenBoxEspTag"
+                        billboard.Size = UDim2.new(0, 120, 0, 50)
+                        billboard.StudsOffset = Vector3.new(0, 3.8, 0)
+                        billboard.AlwaysOnTop = true
+                        
+                        local textLabel = Instance.new("TextLabel")
+                        textLabel.Name = "EspText"
+                        textLabel.Size = UDim2.new(1, 0, 1, 0)
+                        textLabel.BackgroundTransparency = 1
+                        textLabel.Font = Enum.Font.GothamBold
+                        textLabel.TextSize = 12
+                        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        textLabel.TextStrokeTransparency = 0.4
+                        textLabel.Parent = billboard
+                        
+                        billboard.Parent = head
+                        table.insert(espGuiList, billboard)
+                    end
+                    
+                    local textLabel = billboard:FindFirstChild("EspText")
+                    if textLabel and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("HumanoidRootPart") then
+                        local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude)
+                        textLabel.Text = "👤 " .. p.Name .. "\n[ " .. dist .. " studs ]"
+                    end
+                end
+            end
+        end
+
+        if not espEnabled then
+            clearEspGuis()
+        end
+
+        -- Rainbow Health ESP Logic
+        if healthEspEnabled then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") then
+                    local head = p.Character.Head
+                    local hum = p.Character.Humanoid
+                    local billboard = head:FindFirstChild("KyZenHealthTag")
+                    
+                    if not billboard then
+                        billboard = Instance.new("BillboardGui")
+                        billboard.Name = "KyZenHealthTag"
+                        billboard.Size = UDim2.new(0, 100, 0, 40)
+                        billboard.StudsOffset = Vector3.new(0, 2.2, 0)
+                        billboard.AlwaysOnTop = true
+                        
+                        local textLabel = Instance.new("TextLabel")
+                        textLabel.Name = "HealthText"
+                        textLabel.Size = UDim2.new(1, 0, 1, 0)
+                        textLabel.BackgroundTransparency = 1
+                        textLabel.Font = Enum.Font.GothamBold
+                        textLabel.TextSize = 13
+                        textLabel.TextStrokeTransparency = 0.5
+                        textLabel.Parent = billboard
+                        
+                        billboard.Parent = head
+                        table.insert(healthGuiList, billboard)
+                    end
+                    
+                    local textLabel = billboard:FindFirstChild("HealthText")
+                    if textLabel then
+                        textLabel.Text = "HP: " .. math.floor(hum.Health) .. " / " .. math.floor(hum.MaxHealth)
+                        textLabel.TextColor3 = rainbowColor
+                    end
+                end
+            end
+        else
+            clearHealthGuis()
+        end
+
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = char:FindFirstChild("Humanoid")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+
+        if flyToggled and hrp and bodyVelocity and bodyGyro then
+            bodyGyro.CFrame = Camera.CFrame
+            local moveDirection = hum.MoveDirection
+            local ySpeed = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then ySpeed = flySpeed end
+            bodyVelocity.Velocity = (Camera.CFrame.LookVector * (moveDirection.Magnitude > 0 and flySpeed or 0)) + Vector3.new(0, ySpeed, 0)
+        end
+
+        if runTabEnabled and hum then
+            hum.WalkSpeed = customRunSpeed
+        end
+
+        if jumpPowerEnabled and hum then hum.JumpPower = customJumpPower end
+        
+        if dashSpeedEnabled and hum and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (dashSpeedVal / 50))
+        end
+
+        if bunnyHopEnabled and hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        if noclipEnabled then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+        if fullBrightEnabled then Lighting.Brightness = brightLevelValue Lighting.GlobalShadows = false end
+        if fovEnabled then Camera.FieldOfView = fovValue end
+    end)
+end)
+
+WindUI:Notify({ Title = "KyZen HUB", Content = "Box ESP Updated to show Name & Distance! ✅", Duration = 3 })
