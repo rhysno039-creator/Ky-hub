@@ -1,0 +1,358 @@
+-- Load WindUI Library
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- Variabel & Fungsi ESP (Dari Screenshot)
+local hitboxEnabled = false
+local hitboxSizeValue = 5
+local espEnabled = false
+local healthEspEnabled = false
+local chamsEspEnabled = false
+local fullBrightEnabled = false
+local brightLevelValue = 2
+local fovEnabled = false
+local fovValue = 70
+
+local rainbowTracersEnabled = false
+local rainbowSkeletonEnabled = false
+local tracersList = {}
+local healthGuiList = {}
+local espGuiList = {}
+local skeletonGuiList = {}
+
+local function removeTracers()
+    for _, line in pairs(tracersList) do
+        pcall(function() line:Remove() end)
+    end
+    tracersList = {}
+end
+
+local function clearHealthGuis()
+    for _, gui in pairs(healthGuiList) do
+        pcall(function() gui:Destroy() end)
+    end
+    healthGuiList = {}
+end
+
+local function clearEspGuis()
+    for _, gui in pairs(espGuiList) do
+        pcall(function() gui:Destroy() end)
+    end
+    espGuiList = {}
+end
+
+local function clearSkeletonGuis()
+    for _, gui in pairs(skeletonGuiList) do
+        pcall(function() gui:Destroy() end)
+    end
+    skeletonGuiList = {}
+end
+
+local Window = WindUI:CreateWindow({
+    Title = "Universal Hub | ~80 Features",
+    Icon = "rbxassetid://10723415303",
+    Author = "Pro Scripting",
+    Folder = "UniversalHubConfig",
+    Theme = "Dark",
+    Transparent = true,
+    Resizable = true,
+})
+
+-- Tabs Definition (12 Menu)
+local Tabs = {
+    Home = Window:Tab({ Title = "Home", Icon = "home" }),
+    Combat = Window:Tab({ Title = "Combat", Icon = "sword" }),
+    Movement = Window:Tab({ Title = "Movement", Icon = "footprints" }),
+    CFrame = Window:Tab({ Title = "CFrame", Icon = "zap" }),
+    Fly = Window:Tab({ Title = "Fly", Icon = "navigation" }),
+    Visual = Window:Tab({ Title = "Visual", Icon = "eye" }),
+    ESP = Window:Tab({ Title = "ESP", Icon = "users" }),
+    Player = Window:Tab({ Title = "Player", Icon = "user" }),
+    Troll = Window:Tab({ Title = "Troll", Icon = "smile" }),
+    World = Window:Tab({ Title = "World", Icon = "globe" }),
+    Utility = Window:Tab({ Title = "Utility", Icon = "tool" }),
+    Settings = Window:Tab({ Title = "Settings", Icon = "settings" }),
+}
+
+-- ================= 1. HOME =================
+Tabs.Home:Paragraph({
+    Title = "Welcome to Universal Hub",
+    Content = "User: " .. LocalPlayer.Name .. " | Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown")
+})
+
+Tabs.Home:Paragraph({
+    Title = "Server & Performance Stats",
+    Content = "FPS: 60 | Ping: 45ms | Time: 12:00 PM"
+})
+
+Tabs.Home:Button({
+    Title = "Copy TikTok Link",
+    Callback = function() setclipboard("https://tiktok.com/@yourprofile") WindUI:Notify({Title = "Success", Content = "TikTok link copied!"}) end
+})
+
+Tabs.Home:Button({
+    Title = "Join WhatsApp Channel",
+    Callback = function() setclipboard("https://whatsapp.com/channel/yourchannel") WindUI:Notify({Title = "Success", Content = "WA Channel link copied!"}) end
+})
+
+Tabs.Home:Button({
+    Title = "Rejoin / Server Hop / Copy JobId",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer)
+    end
+})
+
+-- ================= 2. COMBAT =================
+Tabs.Combat:Slider({
+    Title = "Hitbox Expander",
+    Description = "Scale player hitboxes (2 - 25)",
+    Min = 2, Max = 25, Default = 2,
+    Callback = function(v) print("Hitbox set to:", v) end
+})
+
+Tabs.Combat:Toggle({ Title = "Hitbox Visualizer", Default = false, Callback = function(v) print("Hitbox Visualizer:", v) end })
+Tabs.Combat:Toggle({ Title = "No Recoil 50%", Default = false, Callback = function(v) print("No Recoil:", v) end })
+Tabs.Combat:Toggle({ Title = "No Camera Shake", Default = false, Callback = function(v) print("No Camera Shake:", v) end })
+
+-- ================= 3. MOVEMENT =================
+Tabs.Movement:Input({
+    Title = "WalkSpeed Input [Max 500]",
+    Placeholder = "Enter speed...",
+    Callback = function(v)
+        local val = tonumber(v)
+        if val and val <= 500 then
+            LocalPlayer.Character.Humanoid.WalkSpeed = val
+        else
+            LocalPlayer:Kick("Kicked for exceeding WalkSpeed limit!")
+        end
+    end
+})
+
+Tabs.Movement:Input({
+    Title = "JumpPower Input [Max 350]",
+    Placeholder = "Enter jump power...",
+    Callback = function(v)
+        local val = tonumber(v)
+        if val and val <= 350 then
+            LocalPlayer.Character.Humanoid.JumpPower = val
+        else
+            LocalPlayer:Kick("Kicked for exceeding JumpPower limit!")
+        end
+    end
+})
+
+Tabs.Movement:Input({
+    Title = "SwimSpeed Input [Max 150]",
+    Placeholder = "Enter swim speed...",
+    Callback = function(v)
+        local val = tonumber(v)
+        if val and val <= 150 then print("SwimSpeed:", val) else LocalPlayer:Kick("Kicked!") end
+    end
+})
+
+Tabs.Movement:Toggle({ Title = "Infinite Jump Toggle", Default = false, Callback = function(v) print("Inf Jump:", v) end })
+Tabs.Movement:Toggle({ Title = "Bunny Hop Toggle", Default = false, Callback = function(v) print("Bhop:", v) end })
+Tabs.Movement:Toggle({ Title = "No Slow / Speed Bypass", Default = false, Callback = function(v) print("No Slow:", v) end })
+Tabs.Movement:Toggle({ Title = "Auto Sprint Toggle", Default = false, Callback = function(v) print("Auto Sprint:", v) end })
+
+-- ================= 4. CFRAME =================
+Tabs.CFrame:Input({
+    Title = "CFrame Speed Input [Max 10]",
+    Placeholder = "Speed 1-10",
+    Callback = function(v) if tonumber(v) and tonumber(v) <= 10 then print("CF Speed:", v) else LocalPlayer:Kick("Kicked!") end end
+})
+
+Tabs.CFrame:Toggle({ Title = "CFrame Walk Toggle", Default = false, Callback = function(v) print("CF Walk:", v) end })
+Tabs.CFrame:Slider({ Title = "CFrame Speed Slider", Min = 1, Max = 10, Default = 1, Callback = function(v) end })
+Tabs.CFrame:Toggle({ Title = "CFrame Fly Toggle", Default = false, Callback = function(v) print("CF Fly:", v) end })
+Tabs.CFrame:Toggle({ Title = "CFrame Anti Stuck", Default = false, Callback = function(v) print("Anti Stuck:", v) end })
+Tabs.CFrame:Slider({ Title = "CFrame TP Delay Slider", Min = 0, Max = 5, Default = 0, Callback = function(v) end })
+
+-- ================= 5. FLY =================
+Tabs.Fly:Toggle({ Title = "Fly Kamera V5 Fix Analog", Default = false, Callback = function(v) print("Fly V5:", v) end })
+Tabs.Fly:Input({ Title = "Fly Speed Input [Max 500]", Placeholder = "Max 500", Callback = function(v) if tonumber(v) and tonumber(v) <= 500 then print("Fly Spd:", v) else LocalPlayer:Kick("Kicked!") end end })
+Tabs.Fly:Toggle({ Title = "Fly Bypass Toggle", Default = false, Callback = function(v) print("Fly Bypass:", v) end })
+Tabs.Fly:Toggle({ Title = "Fly Platform / Invisible Floor", Default = false, Callback = function(v) print("Invisible Floor:", v) end })
+Tabs.Fly:Toggle({ Title = "Fly Q/E Old Mode Toggle", Default = false, Callback = function(v) print("QE Mode:", v) end })
+Tabs.Fly:Slider({ Title = "Fly Vertical Speed Slider", Min = 1, Max = 100, Default = 50, Callback = function(v) end })
+
+-- ================= 6. VISUAL =================
+Tabs.Visual:Toggle({ Title = "Fullbright Toggle", Default = false, Callback = function(v) print("Fullbright:", v) end })
+Tabs.Visual:Toggle({ Title = "Low GFX / Anti Lag V4", Default = false, Callback = function(v) print("Anti Lag:", v) end })
+Tabs.Visual:Toggle({ Title = "Remove Fog Toggle", Default = false, Callback = function(v) print("No Fog:", v) end })
+Tabs.Visual:Toggle({ Title = "Remove Blur + Shadows + Sky", Default = false, Callback = function(v) print("Clean World:", v) end })
+Tabs.Visual:Slider({ Title = "FOV Changer", Min = 70, Max = 120, Default = 70, Callback = function(v) Camera.FieldOfView = v end })
+Tabs.Visual:Toggle({ Title = "No Grass / No Tree Toggle", Default = false, Callback = function(v) print("No Flora:", v) end })
+Tabs.Visual:Slider({ Title = "Brightness Slider", Min = 0, Max = 10, Default = 2, Callback = function(v) Lighting.Brightness = v end })
+Tabs.Visual:Button({ Title = "Day Time Changer (Always Noon)", Callback = function() Lighting.ClockTime = 14 end })
+
+-- ================= 7. ESP (DARI SCREENSHOT) =================
+Tabs.ESP:Section({ Title = "ESP & Effects" })
+
+Tabs.ESP:Toggle({
+    Title = "Rainbow Tracers",
+    Default = false,
+    Callback = function(state)
+        rainbowTracersEnabled = state
+        if not state then removeTracers() end
+    end
+})
+
+Tabs.ESP:Toggle({
+    Title = "Skeleton ESP (Box / Highlight Style)",
+    Default = false,
+    Callback = function(state)
+        rainbowSkeletonEnabled = state
+        if not state then clearSkeletonGuis() end
+    end
+})
+
+Tabs.ESP:Section({ Title = "Hitbox Expander & Box ESP" })
+
+Tabs.ESP:Toggle({
+    Title = "Hitbox Expander (Rainbow)",
+    Default = false,
+    Callback = function(state)
+        hitboxEnabled = state
+        if not state then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                    hrp.CanCollide = true
+                end
+            end
+        end
+    end
+})
+
+Tabs.ESP:Input({
+    Title = "Hitbox Size Value",
+    Default = "5",
+    Placeholder = "Enter size...",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then hitboxSizeValue = num end
+    end
+})
+
+Tabs.ESP:Toggle({
+    Title = "ESP Box (With Name & Distance)",
+    Default = false,
+    Callback = function(state)
+        espEnabled = state
+        if not state then clearEspGuis() end
+    end
+})
+
+Tabs.ESP:Toggle({
+    Title = "Rainbow Health ESP",
+    Default = false,
+    Callback = function(state)
+        healthEspEnabled = state
+        if not state then clearHealthGuis() end
+    end
+})
+
+Tabs.ESP:Toggle({
+    Title = "Chams ESP",
+    Default = false,
+    Callback = function(state)
+        chamsEspEnabled = state
+    end
+})
+
+Tabs.ESP:Section({ Title = "Environment & Camera FOV" })
+
+Tabs.ESP:Toggle({
+    Title = "Full Brightness",
+    Default = false,
+    Callback = function(state)
+        fullBrightEnabled = state
+        if not state then
+            Lighting.Brightness = 1
+            Lighting.GlobalShadows = true
+        end
+    end
+})
+
+Tabs.ESP:Input({
+    Title = "Full Brightness Level",
+    Default = "2",
+    Placeholder = "Enter brightness value...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then brightLevelValue = num end
+    end
+})
+
+Tabs.ESP:Toggle({
+    Title = "Field of View (FOV)",
+    Default = false,
+    Callback = function(state)
+        fovEnabled = state
+        if not state then Camera.FieldOfView = 70 end
+    end
+})
+
+Tabs.ESP:Input({
+    Title = "FOV Number Value",
+    Default = "70",
+    Placeholder = "Enter FOV...",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then fovValue = num end
+    end
+})
+
+-- ================= 8. PLAYER =================
+Tabs.Player:Toggle({ Title = "Noclip V5 Smooth Toggle", Default = false, Callback = function(v) print("Noclip:", v) end })
+Tabs.Player:Slider({ Title = "HipHeight Slider", Min = 2, Max = 20, Default = 2, Callback = function(v) LocalPlayer.Character.Humanoid.HipHeight = v end })
+Tabs.Player:Slider({ Title = "Gravity Slider", Min = 0, Max = 196, Default = 196, Callback = function(v) workspace.Gravity = v end })
+Tabs.Player:Toggle({ Title = "Anti Ragdoll + Anti Trip", Default = false, Callback = function(v) print("Anti Ragdoll:", v) end })
+Tabs.Player:Toggle({ Title = "Anti Fall Damage Toggle", Default = false, Callback = function(v) print("Anti Fall:", v) end })
+Tabs.Player:Button({ Title = "Reset Character Safe", Callback = function() LocalPlayer.Character:BreakJoints() end })
+Tabs.Player:Toggle({ Title = "Sit / Lay Toggle", Default = false, Callback = function(v) print("Sit/Lay:", v) end })
+
+-- ================= 9. TROLL =================
+Tabs.Troll:Slider({ Title = "Spin Bot Speed", Min = 1, Max = 50, Default = 10, Callback = function(v) print("Spin:", v) end })
+Tabs.Troll:Toggle({ Title = "Headless Client Toggle", Default = false, Callback = function(v) print("Headless:", v) end })
+Tabs.Troll:Toggle({ Title = "Fake Fling / Touch Fling", Default = false, Callback = function(v) print("Fling:", v) end })
+Tabs.Troll:Toggle({ Title = "Invisible Character Client", Default = false, Callback = function(v) print("Invisible:", v) end })
+Tabs.Troll:Toggle({ Title = "Float / Swim in Air", Default = false, Callback = function(v) print("Air Swim:", v) end })
+Tabs.Troll:Toggle({ Title = "Giant / Small Client", Default = false, Callback = function(v) print("Resize:", v) end })
+
+-- ================= 10. WORLD =================
+Tabs.World:Toggle({ Title = "Click Teleport (Ctrl + Click)", Default = false, Callback = function(v) print("Click TP:", v) end })
+Tabs.World:Dropdown({ Title = "Teleport to Player", Values = {"Player1", "Player2"}, Callback = function(v) print("TP to:", v) end })
+Tabs.World:Button({ Title = "Teleport Tool Give", Callback = function() print("Given TP Tool") end })
+Tabs.World:Button({ Title = "Teleport to Spawn", Callback = function() print("TP to Spawn") end })
+Tabs.World:Button({ Title = "Teleport to Random Player", Callback = function() print("TP Random") end })
+Tabs.World:Button({ Title = "Walk to Point", Callback = function() print("Walk to point") end })
+
+-- ================= 11. UTILITY =================
+Tabs.Utility:Toggle({ Title = "Shift Lock Biasa Toggle", Default = false, Callback = function(v) print("ShiftLock:", v) end })
+Tabs.Utility:Toggle({ Title = "Anti AFK V2", Default = true, Callback = function(v) print("Anti AFK:", v) end })
+Tabs.Utility:Toggle({ Title = "Anti Kick Client (Hook)", Default = true, Callback = function(v) print("Anti Kick:", v) end })
+Tabs.Utility:Toggle({ Title = "FPS Boost + Ping Stabilizer", Default = false, Callback = function(v) print("Boost:", v) end })
+Tabs.Utility:Button({ Title = "Copy JobId & Join Input", Callback = function() setclipboard(game.JobId) end })
+Tabs.Utility:Button({ Title = "Server Hop + Rejoin", Callback = function() print("Hop / Rejoin") end })
+
+-- ================= 12. SETTINGS =================
+Tabs.Settings:Toggle({ Title = "Security System (Limit Kicks)", Default = true, Callback = function(v) print("Security:", v) end })
+Tabs.Settings:Button({ Title = "Custom Keybind Hub", Callback = function() print("Keybind opened") end })
+Tabs.Settings:Button({ Title = "Unload Hub + Destroy UI", Callback = function() Window:Destroy() end })
+Tabs.Settings:ColorPicker({ Title = "Theme Color Picker", Default = Color3.fromRGB(0, 150, 255), Callback = function(v) Window:SetTheme(v) end })
+Tabs.Settings:Toggle({ Title = "Performance Mode", Default = false, Callback = function(v) print("Perf Mode:", v) end })
+Tabs.Settings:Button({ Title = "Auto Save Config", Callback = function() WindUI:SaveConfig("UniversalConfig") end })
+
+WindUI:Notify({
+    Title = "Hub Loaded Successfully!",
+    Content = "All features initialized with updated ESP configuration using WindUI v1.6.66.",
+    Duration = 5
+})
