@@ -1,0 +1,200 @@
+-- ================= KEY SYSTEM =================
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local keysList = {"From", "Get", "KyZen", "Owner", "Ganteng", "Follow", "Saluran", "Tiktok", "Om", "Tante"}
+
+-- Fix random seed agar key selalu acak setiap eksekusi
+local seed = tick() * os.time()
+math.randomseed(seed)
+math.random(); math.random(); math.random()
+local sessionKey = keysList[math.random(1, #keysList)]
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ModernKeySystem"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 420, 0, 240)
+MainFrame.Position = UDim2.new(0.5, -210, 0.5, -120)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 14)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(80, 100, 255)
+UIStroke.Transparency = 0.4
+UIStroke.Thickness = 1.5
+UIStroke.Parent = MainFrame
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -50, 0, 50)
+Title.Position = UDim2.new(0, 20, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Universal Hub — Security"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = MainFrame
+
+-- Close / Minimize Button (Kick Player)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -42, 0, 9)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "×"
+CloseBtn.TextSize = 22
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = MainFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    LocalPlayer:Kick("Universal Hub: Closed / Minimized.")
+end)
+
+-- TextBox (Kotak Input Key)
+local TextBox = Instance.new("TextBox")
+TextBox.Size = UDim2.new(0.88, 0, 0, 50)
+TextBox.Position = UDim2.new(0.06, 0, 0, 65)
+TextBox.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextBox.PlaceholderText = "Paste or Get Key here..."
+TextBox.PlaceholderColor3 = Color3.fromRGB(110, 110, 130)
+TextBox.TextSize = 15
+TextBox.Font = Enum.Font.GothamMedium
+TextBox.ClearTextOnFocus = false
+TextBox.Parent = MainFrame
+
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0, 10)
+BoxCorner.Parent = TextBox
+
+local BoxStroke = Instance.new("UIStroke")
+BoxStroke.Color = Color3.fromRGB(60, 60, 80)
+BoxStroke.Thickness = 1
+BoxStroke.Parent = TextBox
+
+-- Get Key Button
+local GetKeyBtn = Instance.new("TextButton")
+GetKeyBtn.Size = UDim2.new(0.88, 0, 0, 45)
+GetKeyBtn.Position = UDim2.new(0.06, 0, 0, 125)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(50, 80, 255)
+GetKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GetKeyBtn.Text = "Get Key (Auto-Fill & Copy)"
+GetKeyBtn.TextSize = 14
+GetKeyBtn.Font = Enum.Font.GothamBold
+GetKeyBtn.Parent = MainFrame
+
+local GetKeyCorner = Instance.new("UICorner")
+GetKeyCorner.CornerRadius = UDim.new(0, 10)
+GetKeyCorner.Parent = GetKeyBtn
+
+-- Status Label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, 0, 0, 25)
+StatusLabel.Position = UDim2.new(0, 0, 0, 185)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: Waiting for key input..."
+StatusLabel.TextColor3 = Color3.fromRGB(160, 160, 180)
+StatusLabel.TextSize = 13
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Parent = MainFrame
+
+local keyAuthenticated = false
+
+-- Tombol Get Key: Otomatis copy ke clipboard SEKALIGUS isi textbox secara otomatis
+GetKeyBtn.MouseButton1Click:Connect(function()
+    pcall(function() setclipboard(sessionKey) end)
+    TextBox.Text = sessionKey
+    StatusLabel.Text = "Status: Key copied & auto-filled!"
+    StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+end)
+
+-- Auto verify begitu text terisi atau berubah cocok dengan key
+TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+    if keyAuthenticated then return end
+    local input = TextBox.Text
+    local isValid = false
+    
+    for _, k in pairs(keysList) do
+        if input == k or input == sessionKey then
+            isValid = true
+            break
+        end
+    end
+    
+    if isValid then
+        keyAuthenticated = true
+        StatusLabel.Text = "Status: Success! Opening Hub..."
+        StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        task.wait(0.5)
+        ScreenGui:Destroy()
+    end
+end)
+
+while not keyAuthenticated do
+    task.wait(0.1)
+end
+
+-- ================= MAIN SCRIPT HUB =================
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Universal Hub | Clean Base",
+    Icon = "rbxassetid://10723415303",
+    Author = "Pro Scripting",
+    Folder = "UniversalHubConfig",
+    Theme = "Dark",
+    Transparent = true,
+    Resizable = true,
+})
+
+-- 13 Menu (Home Paling Atas jadi Default + Menu Teleport)
+local Tabs = {
+    Home = Window:Tab({ Title = "Home", Icon = "home" }),
+    Player = Window:Tab({ Title = "Player", Icon = "user" }),
+    Movement = Window:Tab({ Title = "Movement", Icon = "footprints" }),
+    ESP = Window:Tab({ Title = "ESP", Icon = "users" }),
+    Visual = Window:Tab({ Title = "Visual", Icon = "eye" }),
+    CFrame = Window:Tab({ Title = "CFrame", Icon = "zap" }),
+    Fly = Window:Tab({ Title = "Fly", Icon = "navigation" }),
+    Combat = Window:Tab({ Title = "Combat", Icon = "sword" }),
+    Troll = Window:Tab({ Title = "Troll", Icon = "smile" }),
+    World = Window:Tab({ Title = "World", Icon = "globe" }),
+    Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin" }),
+    Utility = Window:Tab({ Title = "Utility", Icon = "tool" }),
+    Settings = Window:Tab({ Title = "Settings", Icon = "settings" }),
+}
+
+-- Kosongkan Section di Setiap Menu
+Tabs.Home:Section({ Title = "Home Menu" })
+Tabs.Player:Section({ Title = "Player Menu" })
+Tabs.Movement:Section({ Title = "Movement Menu" })
+Tabs.ESP:Section({ Title = "ESP Menu" })
+Tabs.Visual:Section({ Title = "Visual Menu" })
+Tabs.CFrame:Section({ Title = "CFrame Menu" })
+Tabs.Fly:Section({ Title = "Fly Menu" })
+Tabs.Combat:Section({ Title = "Combat Menu" })
+Tabs.Troll:Section({ Title = "Troll Menu" })
+Tabs.World:Section({ Title = "World Menu" })
+Tabs.Teleport:Section({ Title = "Teleport Menu" })
+Tabs.Utility:Section({ Title = "Utility Menu" })
+Tabs.Settings:Section({ Title = "Settings Menu" })
+
+WindUI:Notify({
+    Title = "Hub Loaded Successfully!",
+    Content = "Welcome! Key verified automatically.",
+    Duration = 5
+})
