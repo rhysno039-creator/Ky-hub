@@ -1,0 +1,92 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Break and Steal an Egg",
+   LoadingTitle = "Break and Steal an Egg Hub",
+   LoadingSubtitle = "By Custom User",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "BreakAndStealEgg",
+      FileName = "Config"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvite",
+      RememberJoins = true
+   },
+   KeySystem = false,
+})
+
+-- Membuat Tab
+local MainTab = Window:CreateTab("Main Menu", 4483362458)
+local ScriptTab = Window:CreateTab("Script List", 4483362458)
+
+-- ==========================================================
+-- DAFTAR SCRIPT (Kamu bisa tambah, hapus, atau ubah link di sini!)
+-- ==========================================================
+local DaftarScriptKamu = {
+   { Name = "KyZen Script", Link = "https://raw.githubusercontent.com/rhysno039-creator/Ky-hub/refs/heads/main/KyZen4" },
+   { Name = "Contoh Script Kedua", Link = "https://raw.githubusercontent.com/contoh/link/main/script2.lua" },
+   { Name = "Contoh Script Ketiga", Link = "https://raw.githubusercontent.com/contoh/link/main/script3.lua" },
+}
+
+-- Membuat Section di Tab Script List
+local ScriptSection = ScriptTab:CreateSection("Pilih Script Untuk Dijalankan")
+
+-- Otomatis membuat tombol berdasarkan daftar di atas
+for _, data in ipairs(DaftarScriptKamu) do
+   ScriptTab:CreateButton({
+      Name = data.Name,
+      Callback = function()
+         local success, err = pcall(function()
+            loadstring(game:HttpGet(data.Link))()
+         end)
+         
+         if success then
+            Rayfield:Notify({
+               Title = "Berhasil Dimuat!",
+               Content = "Menjalankan: " .. data.Name,
+               Duration = 4,
+               Image = 4483362458,
+            })
+         else
+            Rayfield:Notify({
+               Title = "Gagal!",
+               Content = "Periksa kembali link loadstring script ini.",
+               Duration = 4,
+               Image = 4483362458,
+            })
+         end
+      end,
+   })
+end
+
+-- === TAB MAIN MENU (Fitur Game) ===
+local MainSection = MainTab:CreateSection("Fitur Game")
+
+MainTab:CreateToggle({
+   Name = "Auto Break Egg",
+   CurrentValue = false,
+   Callback = function(Value)
+      if Value then
+         Rayfield:Notify({Title = "Auto Break", Content = "Diaktifkan!", Duration = 3})
+      else
+         Rayfield:Notify({Title = "Auto Break", Content = "Dimatikan!", Duration = 3})
+      end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "Auto Steal Egg",
+   CurrentValue = false,
+   Callback = function(Value)
+      if Value then
+         Rayfield:Notify({Title = "Auto Steal", Content = "Diaktifkan!", Duration = 3})
+      else
+         Rayfield:Notify({Title = "Auto Steal", Content = "Dimatikan!", Duration = 3})
+      end
+   end,
+})
+
+-- Load konfigurasi penyimpanan UI
+Rayfield:LoadConfiguration()
