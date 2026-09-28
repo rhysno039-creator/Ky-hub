@@ -1,0 +1,223 @@
+-- [[ Secured Multi-Line Script (Mobile Friendly) ]]
+local function _c(t)
+    local s = ""
+    for i = 1, #t do
+        s = s .. string.char(t[i])
+    end
+    return s
+end
+
+local _GS = _c({71, 101, 116, 83, 101, 114, 118, 105, 99, 101})
+local _RS = game[_GS](game, _c({82, 101, 112, 108, 105, 99, 97, 116, 101, 100, 83, 116, 111, 114, 97, 103, 101}))
+local _UIS = game[_GS](game, _c({85, 115, 101, 114, 73, 110, 112, 117, 116, 83, 101, 114, 118, 105, 99, 101}))
+local _PL = game[_GS](game, _c({80, 108, 97, 121, 101, 114, 115}))
+local _LP = _PL[_c({76, 111, 99, 97, 108, 80, 108, 97, 121, 101, 114})]
+
+local _WFC = _c({87, 97, 105, 116, 70, 111, 114, 67, 104, 105, 108, 100})
+local _UPR = _RS[_WFC](_RS, _c({85, 112, 103, 114, 97, 100, 101, 80, 108, 111, 116, 82, 101, 113, 117, 101, 115, 116}))
+local _UTR = _RS[_WFC](_RS, _c({85, 112, 103, 114, 97, 100, 101, 84, 114, 101, 97, 100, 109, 105, 108, 82, 101, 113, 117, 101, 115, 116}))
+local _TSR = _RS[_WFC](_RS, _c({84, 114, 97, 105, 108, 83, 104, 111, 112, 82, 101, 113, 117, 101, 115, 116}))
+local _PSR = _RS[_WFC](_RS, _c({80, 105, 99, 107, 97, 120, 101, 83, 104, 111, 112, 82, 101, 113, 117, 101, 115, 116}))
+
+local _AN, _BN, _CN, _DN, _EN, _FN, _GN = false, false, false, false, false, false, nil
+
+local _ZONES = {
+    [_c({83, 97, 102, 101, 32, 90, 111, 110, 101})] = CFrame.new(-52.8850136, 3.72484088, -0.703733861, -0.00552021712, -3.46847884e-08, 0.999984741, -5.03805442e-09, 1, 3.46575071e-08, -0.999984741, -4.84666085e-09, -0.00552021712),
+    [_c({70, 111, 114, 101, 115, 116, 32, 90, 111, 110, 101})] = CFrame.new(-111.679344, 3.91573215, 4.59010077, 0.00395525107, -3.08383434e-08, 0.999992192, -3.10590664e-10, 1, 3.08398143e-08, -0.999992192, -4.32567454e-10, 0.00395525107),
+    [_c({83, 110, 111, 119, 121, 32, 90, 111, 110, 101})] = CFrame.new(-353.785034, 4.08595085, -4.23027754, -0.0316025577, -6.09666762e-09, 0.999500513, 1.0329599e-10, 1, 6.10298034e-09, -0.999500513, 2.96114189e-10, -0.0316025577),
+    [_c({67, 97, 110, 100, 121, 32, 90, 111, 110, 101})] = CFrame.new(-530.908875, 3.88436532, -8.0918951, -0.0743420422, -2.65439244e-08, 0.997232795, -1.79974216e-10, 1, 2.66041624e-08, -0.997232795, 1.79833159e-09, -0.0743420422),
+    [_c({83, 119, 97, 109, 112, 32, 90, 111, 110, 101})] = CFrame.new(-745.910645, 3.72484112, -9.15478611, -0.0522261523, -4.02000655e-09, 0.998635292, -1.56948246e-10, 1, 4.01729228e-09, -0.998635292, 5.30736635e-11, -0.0522261523),
+    [_c({79, 99, 101, 97, 110, 32, 90, 111, 110, 101})] = CFrame.new(-1067.02698, 3.72484112, -6.11380053, -0.0412593372, 1.90019325e-08, 0.999148488, -5.65965295e-11, 1, -1.90204634e-08, -0.999148488, -8.41320014e-10, -0.0412593372),
+    [_c({72, 101, 108, 108, 32, 90, 111, 110, 101})] = CFrame.new(-1448.8512, 3.72484112, -3.31647873, -0.0189424325, -2.07650732e-08, 0.99982059, 7.03338386e-12, 1, 2.07689315e-08, -0.99982059, 4.00446204e-10, -0.0189424325),
+    [_c({66, 108, 111, 115, 115, 111, 109, 32, 90, 111, 110, 101})] = CFrame.new(-1922.15833, 3.72484088, -3.47179413, 0.0193084087, -1.33941862e-08, 0.999813557, 2.01290408e-11, 1, 1.33962947e-08, -0.999813557, -2.38535858e-10, 0.0193084087),
+    [_c({71, 97, 108, 97, 120, 121, 32, 90, 111, 110, 101})] = CFrame.new(-2477.54419, 3.72495532, 1.08326721, -0.0150471125, -2.0719332e-08, 0.999886811, 1.33218167e-11, 1, 2.07218793e-08, -0.999886811, 3.25124733e-10, -0.0150471125),
+}
+
+local function _TP(cf)
+    local ch = _LP.Character
+    if ch and ch:_WFC(ch, _c({72, 117, 109, 97, 111, 105, 100, 82, 111, 111, 116, 80, 97, 114, 116})) then
+        ch.HumanoidRootPart.Anchored = false
+        ch.HumanoidRootPart.CFrame = cf
+    end
+end
+
+local _PG = _LP[_c({80, 108, 97, 121, 101, 114, 71, 117, 105})]
+local _GNM = _c({65, 117, 116, 111, 70, 97, 114, 109, 71, 117, 105})
+if _PG:_WFC(_PG, _GNM) then _PG[_GNM]:Destroy() end
+
+local _SG = Instance.new(_c({83, 99, 114, 101, 101, 110, 71, 117, 105}))
+_SG.Name, _SG.ResetOnSpawn, _SG.Parent = _GNM, false, _PG
+
+local _MF = Instance.new(_c({70, 114, 97, 109, 101}))
+_MF.Size, _MF.Position = UDim2.new(0, 240, 0, 315), UDim2.new(0.5, -120, 0.3, -130)
+_MF.BackgroundColor3, _MF.BorderSizePixel, _MF.Parent = Color3.fromRGB(25, 25, 25), 0, _SG
+Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, _MF.FirstChild.Parent = UDim.new(0, 10), _MF
+
+local _TB = Instance.new(_c({70, 114, 97, 109, 101}))
+_TB.Size, _TB.BackgroundColor3, _TB.BorderSizePixel, _TB.Parent = UDim2.new(1, 0, 0, 32), Color3.fromRGB(40, 40, 40), 0, _MF
+Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, _TB.FirstChild.Parent = UDim.new(0, 10), _TB
+
+local _TL = Instance.new(_c({84, 101, 120, 116, 76, 97, 118, 101, 108}))
+_TL.Size, _TL.Position, _TL.BackgroundTransparency = UDim2.new(1, -75, 1, 0), UDim2.new(0, 10, 0, 0), true
+_TL.Text, _TL.TextColor3, _TL.TextSize = _c({66, 114, 101, 97, 107, 32, 97, 110, 100, 32, 83, 116, 101, 97, 108, 32, 65, 110, 32, 69, 103, 103}), Color3.fromRGB(255, 255, 255), 12
+_TL.Font, _TL.TextXAlignment, _TL.Parent = Enum.Font.SourceSansBold, Enum.TextXAlignment.Left, _TB
+
+local _TPBtn = Instance.new(_c({84, 101, 120, 116, 66, 117, 116, 116, 111, 110}))
+_TPBtn.Size, _TPBtn.Position, _TPBtn.BackgroundColor3 = UDim2.new(0, 32, 0, 24), UDim2.new(1, -68, 0, 4), Color3.fromRGB(50, 100, 150)
+_TPBtn.Text, _TPBtn.TextColor3, _TPBtn.TextSize, _TPBtn.Font = _c({84, 80}), Color3.fromRGB(255, 255, 255), 11, Enum.Font.SourceSansBold
+_TPBtn.Parent = _TB
+Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, _TPBtn.FirstChild.Parent = UDim.new(0, 5), _TPBtn
+
+local _MinBtn = Instance.new(_c({84, 101, 120, 116, 66, 117, 116, 116, 111, 110}))
+_MinBtn.Size, _MinBtn.Position, _MinBtn.BackgroundColor3 = UDim2.new(0, 24, 0, 24), UDim2.new(1, -30, 0, 4), Color3.fromRGB(60, 60, 60)
+_MinBtn.Text, _MinBtn.TextColor3, _MinBtn.TextSize, _MinBtn.Font = _c({45}), Color3.fromRGB(255, 255, 255), 14, Enum.Font.SourceSansBold
+_MinBtn.Parent = _TB
+Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, _MinBtn.FirstChild.Parent = UDim.new(0, 5), _MinBtn
+
+local _FL = Instance.new(_c({84, 101, 120, 116, 76, 97, 118, 101, 108}))
+_FL.Size, _FL.Position, _FL.BackgroundTransparency = UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 1, -20), true
+_FL.Text, _FL.TextColor3, _FL.TextSize, _FL.Font, _FL.Parent = _c({84, 84, 32, 58, 32, 107, 121, 122, 101, 110, 56, 54, 56}), Color3.fromRGB(160, 160, 160), 11, Enum.Font.SourceSansItalic, _MF
+
+local _SF = Instance.new(_c({83, 99, 114, 111, 108, 108, 105, 110, 103, 70, 114, 97, 109, 101}))
+_SF.Size, _SF.Position, _SF.BackgroundTransparency = UDim2.new(1, 0, 1, -55), UDim2.new(0, 0, 0, 32), true
+_SF.CanvasSize, _SF.ScrollBarThickness, _SF.Parent = UDim2.new(0, 0, 0, 230), 3, _MF
+
+local function _MakeToggle(txt, y, cb)
+    local b = Instance.new(_c({84, 101, 120, 116, 66, 117, 116, 116, 111, 110}))
+    b.Size, b.Position, b.BackgroundColor3 = UDim2.new(1, -16, 0, 32), UDim2.new(0, 8, 0, y), Color3.fromRGB(45, 45, 45)
+    b.Text, b.TextColor3, b.TextSize, b.Font = txt .. _c({58, 32, 79, 70, 70}), Color3.fromRGB(255, 90, 90), 12, Enum.Font.SourceSansBold
+    b.Parent = _SF
+    Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, b.FirstChild.Parent = UDim.new(0, 6), b
+    local st = false
+    b.MouseButton1Click:Connect(function()
+        st = not st
+        if st then
+            b.Text, b.TextColor3, b.BackgroundColor3 = txt .. _c({58, 32, 79, 78}), Color3.fromRGB(90, 255, 90), Color3.fromRGB(30, 70, 30)
+        else
+            b.Text, b.TextColor3, b.BackgroundColor3 = txt .. _c({58, 32, 79, 70, 70}), Color3.fromRGB(255, 90, 90), Color3.fromRGB(45, 45, 45)
+        end
+        cb(st)
+    end)
+end
+
+_MakeToggle(_c({76, 111, 99, 107, 32, 80, 111, 115, 105, 110, 101, 110, 115}), 6, function(s)
+    _AN = s
+    if _LP.Character and _LP.Character:_WFC(_LP.Character, _c({72, 117, 109, 97, 111, 105, 100, 82, 111, 111, 116, 80, 97, 114, 116})) then
+        local rt = _LP.Character.HumanoidRootPart
+        if s then rt.Anchored = false _GN = rt.CFrame rt.CFrame = _GN rt.Anchored = true else rt.Anchored = false end
+    end
+end)
+
+_MakeToggle(_c({73, 110, 115, 116, 97, 110, 116, 32, 83, 116, 101, 97, 108}), 42, function(s) _BN = s end)
+_MakeToggle(_c({65, 117, 116, 111, 32, 85, 112, 103, 114, 97, 101, 101, 32, 80, 108, 111, 116}), 78, function(s) _CN = s end)
+_MakeToggle(_c({65, 117, 116, 111, 32, 85, 112, 103, 114, 97, 101, 101, 32, 84, 114, 101, 97, 100, 109, 105, 108, 108}), 114, function(s) _DN = s end)
+_MakeToggle(_c({65, 117, 116, 111, 32, 66, 117, 121, 32, 84, 114, 97, 101, 108, 32, 40, 49, 45, 49, 49, 41}), 150, function(s) _EN = s end)
+_MakeToggle(_c({65, 117, 116, 111, 32, 66, 117, 121, 32, 80, 105, 99, 107, 97, 120, 101, 32, 40, 49, 45, 49, 56, 41}), 186, function(s) _FN = s end)
+
+local _TPF = Instance.new(_c({70, 114, 97, 109, 101}))
+_TPF.Size, _TPF.Position, _TPF.BackgroundColor3, _TPF.BorderSizePixel, _TPF.Visible, _TPF.Parent = UDim2.new(0, 160, 0, 315), UDim2.new(1, 6, 0, 0), Color3.fromRGB(25, 25, 25), 0, false, _MF
+Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, _TPF.FirstChild.Parent = UDim.new(0, 10), _TPF
+
+local _TPSF = Instance.new(_c({83, 99, 114, 111, 108, 108, 105, 110, 103, 70, 114, 97, 109, 101}))
+_TPSF.Size, _TPSF.Position, _TPSF.BackgroundTransparency, _TPSF.CanvasSize, _TPSF.ScrollBarThickness, _TPSF.Parent = UDim2.new(1, 0, 1, -30), UDim2.new(0, 0, 0, 30), true, UDim2.new(0, 0, 0, 380), 3, _TPF
+
+local _TPTL = Instance.new(_c({84, 101, 120, 116, 76, 97, 118, 101, 108}))
+_TPTL.Size, _TPTL.BackgroundTransparency, _TPTL.Text = UDim2.new(1, 0, 0, 30), true, _c({84, 101, 101, 101, 112, 111, 114, 116, 32, 90, 111, 110, 101})
+_TPTL.TextColor3, _TPTL.TextSize, _TPTL.Font, _TPTL.Parent = Color3.fromRGB(255, 255, 255), 12, Enum.Font.SourceSansBold, _TPF
+
+local _yo = 6
+for k, v in pairs(_ZONES) do
+    local b = Instance.new(_c({84, 101, 120, 116, 66, 117, 116, 116, 111, 110}))
+    b.Size, b.Position, b.BackgroundColor3 = UDim2.new(1, -16, 0, 32), UDim2.new(0, 8, 0, _yo), Color3.fromRGB(50, 50, 50)
+    b.Text, b.TextColor3, b.TextSize, b.Font, b.Parent = k, Color3.fromRGB(255, 255, 255), 11, Enum.Font.SourceSansBold, _TPSF
+    Instance.new(_c({85, 73, 67, 111, 114, 110, 101, 114})).CornerRadius, b.FirstChild.Parent = UDim.new(0, 5), b
+    b.MouseButton1Click:Connect(function() _TP(v) end)
+    _yo = _yo + 38
+end
+
+local _tpOpen = false
+_TPBtn.MouseButton1Click:Connect(function() _tpOpen = not _tpOpen _TPF.Visible = _tpOpen end)
+
+local _min = false
+_MinBtn.MouseButton1Click:Connect(function()
+    _min = not _min
+    _SF.Visible, _FL.Visible, _TPF.Visible, _tpOpen = not _min, not _min, false, false
+    if _min then _MF.Size, _MinBtn.Text = UDim2.new(0, 240, 0, 32), _c({43}) else _MF.Size, _MinBtn.Text = UDim2.new(0, 240, 0, 315), _c({45}) end
+end)
+
+local _dr, _ds, _dp
+_TB.InputBegan:Connect(function(io)
+    if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then
+        _dr, _ds, _dp = true, io.Position, _MF.Position
+        io.Changed:Connect(function() if io.UserInputState == Enum.UserInputState.End then _dr = false end end)
+    end
+end)
+_UIS.InputChanged:Connect(function(io)
+    if _dr and (io.UserInputType == Enum.UserInputType.MouseMovement or io.UserInputType == Enum.UserInputType.Touch) then
+        local dt = io.Position - _ds
+        _MF.Position = UDim2.new(_dp.X.Scale, _dp.X.Offset + dt.X, _dp.Y.Scale, _dp.Y.Offset + dt.Y)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _AN and _GN and _LP.Character then
+            pcall(function()
+                local rt = _LP.Character:_WFC(_LP.Character, _c({72, 117, 109, 97, 111, 105, 100, 82, 111, 111, 116, 80, 97, 114, 116}))
+                if rt then if not rt.Anchored then rt.Anchored = true end rt.CFrame = _GN end
+            end)
+        end
+        task.wait(0.2)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _BN then
+            for _, pr in ipairs(workspace:GetDescendants()) do
+                if pr:IsA(_c({80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116})) then pr.HoldDuration = 0 end
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _CN then pcall(function() _UPR:FireServer() end) end
+        task.wait(1.5)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _DN then pcall(function() _UTR:FireServer() end) end
+        task.wait(1.5)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _EN then
+            for id = 1, 11 do
+                if not _EN then break end
+                pcall(function() _TSR:FireServer(_c({66, 117, 121}), id) end)
+                task.wait(0.2)
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _FN then
+            for id = 1, 18 do
+                if not _FN then break end
+                pcall(function() _PSR:FireServer(_c({66, 117, 121}), id) end)
+                task.wait(0.2)
+            end
+        end
+        task.wait(1)
+    end
+end)
