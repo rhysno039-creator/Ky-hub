@@ -1,0 +1,451 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Remote References
+local upgradePlot = ReplicatedStorage:WaitForChild("UpgradePlotRequest")
+local upgradeTreadmill = ReplicatedStorage:WaitForChild("UpgradeTreadmillRequest")
+local trailShop = ReplicatedStorage:WaitForChild("TrailShopRequest")
+local pickaxeShop = ReplicatedStorage:WaitForChild("PickaxeShopRequest")
+local treadmillSession = ReplicatedStorage:FindFirstChild("TreadmillSessionRemote", true)
+
+-- Status Fitur (On/Off)
+local autoSmartTreadmillActive = false
+local lockPositionActive = false
+local instantStealActive = false
+local autoPlotActive = false
+local autoTreadmillUpgradeActive = false
+local autoTrailActive = false
+local autoPickaxeActive = false
+
+local lockedTreadmillCFrame = nil
+
+-- Data Koordinat Zone (CFrame) untuk Menu Teleport Laci
+local zones = {
+    ["Safe Zone"] = CFrame.new(-52.8850136, 3.72484088, -0.703733861, -0.00552021712, -3.46847884e-08, 0.999984741, -5.03805442e-09, 1, 3.46575071e-08, -0.999984741, -4.84666085e-09, -0.00552021712),
+    ["Forest Zone"] = CFrame.new(-111.679344, 3.91573215, 4.59010077, 0.00395525107, -3.08383434e-08, 0.999992192, -3.10590664e-10, 1, 3.08398143e-08, -0.999992192, -4.32567454e-10, 0.00395525107),
+    ["Snowy Zone"] = CFrame.new(-353.785034, 4.08595085, -4.23027754, -0.0316025577, -6.09666762e-09, 0.999500513, 1.0329599e-10, 1, 6.10298034e-09, -0.999500513, 2.96114189e-10, -0.0316025577),
+    ["Candy Zone"] = CFrame.new(-530.908875, 3.88436532, -8.0918951, -0.0743420422, -2.65439244e-08, 0.997232795, -1.79974216e-10, 1, 2.66041624e-08, -0.997232795, 1.79833159e-09, -0.0743420422),
+    ["Swamp Zone"] = CFrame.new(-745.910645, 3.72484112, -9.15478611, -0.0522261523, -4.02000655e-09, 0.998635292, -1.56948246e-10, 1, 4.01729228e-09, -0.998635292, 5.30736635e-11, -0.0522261523),
+    ["Ocean Zone"] = CFrame.new(-1067.02698, 3.72484112, -6.11380053, -0.0412593372, 1.90019325e-08, 0.999148488, -5.65965295e-11, 1, -1.90204634e-08, -0.999148488, -8.41320014e-10, -0.0412593372),
+    ["Hell Zone"] = CFrame.new(-1448.8512, 3.72484112, -3.31647873, -0.0189424325, -2.07650732e-08, 0.99982059, 7.03338386e-12, 1, 2.07689315e-08, -0.99982059, 4.00446204e-10, -0.0189424325),
+    ["Blossom Zone"] = CFrame.new(-1922.15833, 3.72484088, -3.47179413, 0.0193084087, -1.33941862e-08, 0.999813557, 2.01290408e-11, 1, 1.33962947e-08, -0.999813557, -2.38535858e-10, 0.0193084087),
+    ["Galaxy Zone"] = CFrame.new(-2477.54419, 3.72495532, 1.08326721, -0.0150471125, -2.0719332e-08, 0.999886811, 1.33218167e-11, 1, 2.07218793e-08, -0.999886811, 3.25124733e-10, -0.0150471125),
+}
+
+-- Fungsi Teleport
+local function teleportTo(cf)
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.Anchored = false
+        char.HumanoidRootPart.CFrame = cf
+    end
+end
+
+-- Hapus GUI lama
+if player.PlayerGui:FindFirstChild("AutoFarmGui") then
+    player.PlayerGui.AutoFarmGui:Destroy()
+end
+
+-- Buat ScreenGui Utama
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoFarmGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player.PlayerGui
+
+-- Main Frame (UI Pendek / Ringkas)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 240, 0, 315)
+mainFrame.Position = UDim2.new(0.5, -120, 0.3, -130)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+-- Top Bar
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 32)
+topBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0, 10)
+topCorner.Parent = topBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -75, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Break and Steal An Egg"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 12
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = topBar
+
+-- Tombol Teleport Menu (Laci)
+local tpMenuBtn = Instance.new("TextButton")
+tpMenuBtn.Size = UDim2.new(0, 32, 0, 24)
+tpMenuBtn.Position = UDim2.new(1, -68, 0, 4)
+tpMenuBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 150)
+tpMenuBtn.Text = "TP"
+tpMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpMenuBtn.TextSize = 11
+tpMenuBtn.Font = Enum.Font.SourceSansBold
+tpMenuBtn.Parent = topBar
+local tpCorner = Instance.new("UICorner") tpCorner.CornerRadius = UDim.new(0, 5) tpCorner.Parent = tpMenuBtn
+
+-- Tombol Minimize (-)
+local minButton = Instance.new("TextButton")
+minButton.Size = UDim2.new(0, 24, 0, 24)
+minButton.Position = UDim2.new(1, -30, 0, 4)
+minButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minButton.Text = "-"
+minButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minButton.TextSize = 14
+minButton.Font = Enum.Font.SourceSansBold
+minButton.Parent = topBar
+local minCorner = Instance.new("UICorner") minCorner.CornerRadius = UDim.new(0, 5) minCorner.Parent = minButton
+
+-- Footer Teks di Paling Bawah
+local footerLabel = Instance.new("TextLabel")
+footerLabel.Size = UDim2.new(1, 0, 0, 20)
+footerLabel.Position = UDim2.new(0, 0, 1, -20)
+footerLabel.BackgroundTransparency = 1
+footerLabel.Text = "TT : kyzen868"
+footerLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+footerLabel.TextSize = 11
+footerLabel.Font = Enum.Font.SourceSansItalic
+footerLabel.Parent = mainFrame
+
+-- Scrolling Frame untuk Fitur Utama
+local contentScroll = Instance.new("ScrollingFrame")
+contentScroll.Size = UDim2.new(1, 0, 1, -55)
+contentScroll.Position = UDim2.new(0, 0, 0, 32)
+contentScroll.BackgroundTransparency = 1
+contentScroll.CanvasSize = UDim2.new(0, 0, 0, 290)
+contentScroll.ScrollBarThickness = 3
+contentScroll.Parent = mainFrame
+
+-- Fungsi Pembuat Toggle Button Kompak
+local function createCustomToggle(name, yPos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, 32)
+    btn.Position = UDim2.new(0, 8, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(255, 90, 90)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Parent = contentScroll
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            btn.Text = name .. ": ON"
+            btn.TextColor3 = Color3.fromRGB(90, 255, 90)
+            btn.BackgroundColor3 = Color3.fromRGB(30, 70, 30)
+        else
+            btn.Text = name .. ": OFF"
+            btn.TextColor3 = Color3.fromRGB(255, 90, 90)
+            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        end
+        callback(active)
+    end)
+
+    return {
+        SetState = function(state)
+            active = state
+            if active then
+                btn.Text = name .. ": ON"
+                btn.TextColor3 = Color3.fromRGB(90, 255, 90)
+                btn.BackgroundColor3 = Color3.fromRGB(30, 70, 30)
+            else
+                btn.Text = name .. ": OFF"
+                btn.TextColor3 = Color3.fromRGB(255, 90, 90)
+                btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            end
+        end
+    }
+end
+
+local function createToggle(name, yPos, callback)
+    createCustomToggle(name, yPos, callback)
+end
+
+-- SUSUNAN FITUR (Nama diubah sesuai permintaan)
+local smartTreadmillUI = createCustomToggle("Auto Treadmill (Terdekat)", 6, function(state) 
+    autoSmartTreadmillActive = state 
+    if state then
+        lockPositionActive = false
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.Anchored = false
+        end
+    end
+end)
+
+local lockPosUI = createCustomToggle("Lock Position", 42, function(state) 
+    lockPositionActive = state 
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local root = player.Character.HumanoidRootPart
+        if state then
+            root.Anchored = false
+            lockedTreadmillCFrame = root.CFrame
+            root.CFrame = lockedTreadmillCFrame
+            root.Anchored = true -- Mengunci posisi total untuk mencegah kamera getar
+        else
+            root.Anchored = false
+        end
+    end
+end)
+
+createToggle("Instant Steal", 78, function(state) instantStealActive = state end)
+createToggle("Auto Upgrade Plot", 114, function(state) autoPlotActive = state end)
+createToggle("Auto Upgrade Treadmill", 150, function(state) autoTreadmillUpgradeActive = state end)
+createToggle("Auto Buy Trail (1-11)", 186, function(state) autoTrailActive = state end)      -- Nama diubah
+createToggle("Auto Buy Pickaxe (1-18)", 222, function(state) autoPickaxeActive = state end)  -- Nama diubah
+
+-- Laci Teleport Menu (Frame Terpisah di Samping)
+local tpFrame = Instance.new("Frame")
+tpFrame.Size = UDim2.new(0, 160, 0, 315)
+tpFrame.Position = UDim2.new(1, 6, 0, 0)
+tpFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+tpFrame.BorderSizePixel = 0
+tpFrame.Visible = false
+tpFrame.Parent = mainFrame
+local tpFC = Instance.new("UICorner") tpFC.CornerRadius = UDim.new(0, 10) tpFC.Parent = tpFrame
+
+local tpScroll = Instance.new("ScrollingFrame")
+tpScroll.Size = UDim2.new(1, 0, 1, -30)
+tpScroll.Position = UDim2.new(0, 0, 0, 30)
+tpScroll.BackgroundTransparency = 1
+tpScroll.CanvasSize = UDim2.new(0, 0, 0, 380)
+tpScroll.ScrollBarThickness = 3
+tpScroll.Parent = tpFrame
+
+local tpTitle = Instance.new("TextLabel")
+tpTitle.Size = UDim2.new(1, 0, 0, 30)
+tpTitle.BackgroundTransparency = 1
+tpTitle.Text = "Teleport Zone"
+tpTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpTitle.TextSize = 12
+tpTitle.Font = Enum.Font.SourceSansBold
+tpTitle.Parent = tpFrame
+
+local yOffset = 6
+for name, cf in pairs(zones) do
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(1, -16, 0, 32)
+    tpBtn.Position = UDim2.new(0, 8, 0, yOffset)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    tpBtn.Text = name
+    tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpBtn.TextSize = 11
+    tpBtn.Font = Enum.Font.SourceSansBold
+    tpBtn.Parent = tpScroll
+    
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0, 5) c.Parent = tpBtn
+    
+    tpBtn.MouseButton1Click:Connect(function()
+        teleportTo(cf)
+    end)
+    yOffset = yOffset + 38
+end
+
+-- Buka/Tutup Laci Teleport
+local tpOpen = false
+tpMenuBtn.MouseButton1Click:Connect(function()
+    tpOpen = not tpOpen
+    tpFrame.Visible = tpOpen
+end)
+
+-- Minimize Menu
+local minimized = false
+minButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    contentScroll.Visible = not minimized
+    footerLabel.Visible = not minimized
+    tpFrame.Visible = false
+    tpOpen = false
+    if minimized then
+        mainFrame.Size = UDim2.new(0, 240, 0, 32)
+        minButton.Text = "+"
+    else
+        mainFrame.Size = UDim2.new(0, 240, 0, 315)
+        minButton.Text = "-"
+    end
+end)
+
+-- Draggable UI
+local dragging, dragStart, startPos
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- LOGIC LOOPS (Background Tasks)
+
+-- 1. Auto Smart Treadmill Scanner
+task.spawn(function()
+    while true do
+        if autoSmartTreadmillActive then
+            pcall(function()
+                local treadmills = {}
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and (obj.Name:lower():find("treadmill") or obj.Name:lower():find("training")) then
+                        local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if primaryPart then
+                            table.insert(treadmills, {model = obj, part = primaryPart})
+                        end
+                    end
+                end
+                
+                local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    table.sort(treadmills, function(a, b)
+                        return (a.part.Position - root.Position).Magnitude < (b.part.Position - root.Position).Magnitude
+                    end)
+                end
+                
+                for _, data in ipairs(treadmills) do
+                    if not autoSmartTreadmillActive then break end
+                    local obj = data.model
+                    local primaryPart = data.part
+                    
+                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        root.Anchored = false
+                        root.CFrame = primaryPart.CFrame + Vector3.new(0, 3, 0)
+                        task.wait(0.15)
+                        
+                        local hasTargetSign = false
+                        for _, desc in ipairs(obj:GetDescendants()) do
+                            if desc:IsA("TextLabel") then
+                                local txt = desc.Text
+                                if txt:find("+") or txt:lower():find("step") then
+                                    hasTargetSign = true
+                                    break
+                                end
+                            end
+                        end
+                        
+                        if hasTargetSign then
+                            lockedTreadmillCFrame = primaryPart.CFrame + Vector3.new(0, 3, 0)
+                            root.CFrame = lockedTreadmillCFrame
+                            
+                            if treadmillSession then
+                                treadmillSession:FireServer()
+                            end
+                            
+                            autoSmartTreadmillActive = false
+                            smartTreadmillUI.SetState(false)
+                            
+                            lockPositionActive = true
+                            root.Anchored = true -- Kunci posisi agar stabil
+                            lockPosUI.SetState(true)
+                            break
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(1)
+    end
+end)
+
+-- 2. Lock Position Loop (Anti-Geter dengan Anchored)
+task.spawn(function()
+    while true do
+        if lockPositionActive and lockedTreadmillCFrame and player.Character then
+            pcall(function()
+                local root = player.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    if not root.Anchored then
+                        root.Anchored = true
+                    end
+                    root.CFrame = lockedTreadmillCFrame
+                end
+            end)
+        end
+        task.wait(0.2)
+    end
+end)
+
+-- 3. Instant Steal
+task.spawn(function()
+    while true do
+        if instantStealActive then
+            for _, prompt in ipairs(workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    prompt.HoldDuration = 0
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+-- 4. Auto Upgrade Plot
+task.spawn(function()
+    while true do
+        if autoPlotActive then pcall(function() upgradePlot:FireServer() end) end
+        task.wait(1.5)
+    end
+end)
+
+-- 5. Auto Upgrade Treadmill
+task.spawn(function()
+    while true do
+        if autoTreadmillUpgradeActive then pcall(function() upgradeTreadmill:FireServer() end) end
+        task.wait(1.5)
+    end
+end)
+
+-- 6. Auto Buy Trail (1-11)
+task.spawn(function()
+    while true do
+        if autoTrailActive then
+            for id = 1, 11 do
+                if not autoTrailActive then break end
+                pcall(function() trailShop:FireServer("Buy", id) end)
+                task.wait(0.2)
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+-- 7. Auto Buy Pickaxe (1-18)
+task.spawn(function()
+    while true do
+        if autoPickaxeActive then
+            for id = 1, 18 do
+                if not autoPickaxeActive then break end
+                pcall(function() pickaxeShop:FireServer("Buy", id) end)
+                task.wait(0.2)
+            end
+        end
+        task.wait(1)
+    end
+end)
