@@ -1,0 +1,313 @@
+-- ==========================================================
+-- Backflip for Animals - Safe Mobile Execution Fix
+-- ==========================================================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+-- Mengatasi pembatasan CoreGui pada executor HP
+local Success, UIContainer = pcall(function()
+    if gethui then
+        return gethui()
+    elseif game:GetService("CoreGui") then
+        return game:GetService("CoreGui")
+    else
+        return LocalPlayer:WaitForChild("PlayerGui")
+    end
+end)
+
+if not Success or not UIContainer then
+    UIContainer = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- Hapus UI lama jika ada
+if UIContainer:FindFirstChild("ToraStyleHub") then
+    UIContainer.ToraStyleHub:Destroy()
+end
+
+-- Konfigurasi Status Fitur (Toggle)
+getgenv().BFA_Config = {
+    AutoSteal = false,
+    InstantSteal = false,
+    AutoTreadmill = false,
+    UpgradeTreadmill = false,
+    DoubleTrain = false,
+    AutoPlace = false,
+    AutoUpgradePlot = false,
+    AutoSpin = false,
+    AutoClaimAll = false,
+    AutoBuyTrails = false,
+    SelectedTrail = "Green Trail"
+}
+
+-- List Data Trail & Zona
+local TrailList = {
+    "Green Trail", "Red Trail", "Blue Trail", "Water Trail", 
+    "Fire Trail", "Galaxy Trail", "67 Trail", "Rainbow Trail", 
+    "Void Trail", "Star Trail", "Crimson Trail", "Toxic Trail"
+}
+
+local ZoneList = {"Zone 1", "Zone 2", "Zone 3", "Zone 4"}
+local ZonePositions = {
+    ["Zone 1"] = CFrame.new(0, 5, 0),
+    ["Zone 2"] = CFrame.new(150, 5, 0),
+    ["Zone 3"] = CFrame.new(350, 5, 0),
+    ["Zone 4"] = CFrame.new(600, 5, 0),
+}
+local selectedZone = "Zone 1"
+
+-- Remote Networker Handler
+local NetworkerClient = nil
+pcall(function()
+    local packages = ReplicatedStorage:FindFirstChild("Packages")
+    if packages then
+        local networker = packages:FindFirstChild("Networker")
+        if networker then
+            NetworkerClient = require(networker:FindFirstChild("NetworkerClient"))
+        end
+    end
+end)
+
+local function fireRemote(actionName, ...)
+    pcall(function()
+        if NetworkerClient and type(NetworkerClient) == "table" and NetworkerClient.Fire then
+            NetworkerClient:Fire(actionName, ...)
+        else
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+            if remotes and remotes:FindFirstChild(actionName) then
+                remotes[actionName]:FireServer(...)
+            end
+        end
+    end)
+end
+
+-- ==========================================================
+-- BACKGROUND LOGIC LOOPS
+-- ==========================================================
+task.spawn(function()
+    while task.wait(0.5) do
+        if getgenv().BFA_Config.AutoSteal then fireRemote("Steal") end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if getgenv().BFA_Config.InstantSteal then fireRemote("InstantSteal", true) end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.3) do
+        if getgenv().BFA_Config.AutoTreadmill then fireRemote("Treadmill") end
+        if getgenv().BFA_Config.DoubleTrain then fireRemote("2xTrain", true) end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if getgenv().BFA_Config.UpgradeTreadmill then fireRemote("UpgradeTreadmill") end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if getgenv().BFA_Config.AutoPlace then fireRemote("Place") end
+        if getgenv().BFA_Config.AutoUpgradePlot then fireRemote("UpgradePlot") end
+        if getgenv().BFA_Config.AutoSpin then fireRemote("Spin") end
+        if getgenv().BFA_Config.AutoClaimAll then fireRemote("ClaimAll") end
+    end
+end)
+
+local function buySelectedTrail(trailName)
+    fireRemote("BuyTrail", trailName)
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        if getgenv().BFA_Config.AutoBuyTrails then
+            buySelectedTrail(getgenv().BFA_Config.SelectedTrail)
+        end
+    end
+end)
+
+-- ==========================================================
+-- GUI CREATION (TORA STYLE - SAFE MOBILE)
+-- ==========================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ToraStyleHub"
+ScreenGui.Parent = UIContainer
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 260, 0, 420)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 6)
+MainCorner.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BorderSizePixel = 0
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 6)
+TitleCorner.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = TitleBar
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "Backflip Hub [Safe Mobile]"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 13
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local FoldBtn = Instance.new("TextButton")
+FoldBtn.Parent = TitleBar
+FoldBtn.BackgroundTransparency = 1
+FoldBtn.Position = UDim2.new(1, -30, 0, 0)
+FoldBtn.Size = UDim2.new(0, 30, 1, 0)
+FoldBtn.Font = Enum.Font.GothamBold
+FoldBtn.Text = "-"
+FoldBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FoldBtn.TextSize = 16
+
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Parent = MainFrame
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.Position = UDim2.new(0, 5, 0, 40)
+ScrollingFrame.Size = UDim2.new(1, -10, 1, -45)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 750)
+ScrollingFrame.ScrollBarThickness = 3
+
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = ScrollingFrame
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 5)
+
+local function addToggle(name, configKey)
+    local btn = Instance.new("TextButton")
+    btn.Parent = ScrollingFrame
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.AutoButtonColor = false
+    btn.Font = Enum.Font.Gotham
+    btn.Text = "  " .. name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.TextSize = 11
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        getgenv().BFA_Config[configKey] = not getgenv().BFA_Config[configKey]
+        local active = getgenv().BFA_Config[configKey]
+        btn.Text = "  " .. name .. ": " .. (active and "ON" or "OFF")
+        btn.TextColor3 = active and Color3.fromRGB(0, 255, 128) or Color3.fromRGB(200, 200, 200)
+    end)
+end
+
+local function addButton(name, callback)
+    local btn = Instance.new("TextButton")
+    btn.Parent = ScrollingFrame
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.AutoButtonColor = false
+    btn.Font = Enum.Font.GothamBold
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 11
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+local function addDropdown(title, options, callback)
+    local index = 1
+    local btn = Instance.new("TextButton")
+    btn.Parent = ScrollingFrame
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.AutoButtonColor = false
+    btn.Font = Enum.Font.Gotham
+    btn.Text = "  " .. title .. ": " .. options[1]
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 11
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        index = index + 1
+        if index > #options then index = 1 end
+        local chosen = options[index]
+        btn.Text = "  " .. title .. ": " .. chosen
+        callback(chosen)
+    end)
+end
+
+-- Menambahkan Fitur ke UI
+addToggle("Auto Steal", "AutoSteal")
+addToggle("Instant Steal", "InstantSteal")
+addToggle("Auto Treadmill", "AutoTreadmill")
+addToggle("Upgrade Treadmill", "UpgradeTreadmill")
+addToggle("2x Train Boost", "DoubleTrain")
+addToggle("Auto Place Item", "AutoPlace")
+addToggle("Auto Upgrade Plot", "AutoUpgradePlot")
+addToggle("Auto Spin", "AutoSpin")
+addToggle("Auto Claim All", "AutoClaimAll")
+
+addDropdown("Pilih Trail", TrailList, function(chosen)
+    getgenv().BFA_Config.SelectedTrail = chosen
+end)
+
+addButton("Beli Trail Terpilih (Sekali Pencet)", function()
+    buySelectedTrail(getgenv().BFA_Config.SelectedTrail)
+end)
+
+addToggle("Auto Buy Trails", "AutoBuyTrails")
+
+addDropdown("Pilih Zona", ZoneList, function(chosen)
+    selectedZone = chosen
+end)
+
+addButton("Teleport ke Zona Terpilih", function()
+    local pos = ZonePositions[selectedZone]
+    if pos and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = pos
+    end
+end)
+
+local isFolded = false
+FoldBtn.MouseButton1Click:Connect(function()
+    isFolded = not isFolded
+    ScrollingFrame.Visible = not isFolded
+    if isFolded then
+        MainFrame.Size = UDim2.new(0, 260, 0, 35)
+        FoldBtn.Text = "+"
+    else
+        MainFrame.Size = UDim2.new(0, 260, 0, 420)
+        FoldBtn.Text = "-"
+    end
+end)
